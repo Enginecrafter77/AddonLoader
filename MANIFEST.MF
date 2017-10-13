@@ -1,0 +1,7 @@
+Manifest-Version: 1.0
+Ant-Version: Apache Ant 1.8.4
+Created-By: 1.8.0_55-b14 (Oracle Corporation)
+Main-Class: lejos.ev3.startup.MainMenu
+Class-Path: /home/root/lejos/lib/ev3classes.jar /home/root/lejos/lib/d
+ busjava.jar /home/root/lejos/libjna/usr/share/java/jna.jar
+

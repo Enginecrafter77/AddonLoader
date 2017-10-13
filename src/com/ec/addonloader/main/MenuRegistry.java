@@ -29,6 +29,8 @@ public final class MenuRegistry {
 	public static MappedMenu bluetooth_dev;
 	/** The menu displayed when pressing escape in main menu.*/
 	public static MappedMenu boot_menu;
+	/** Menu displayed when connecting to wifi */
+	public static MappedMenu wifimenu;
 	
 	/**
 	 * Called internally to initialize all the menus. Needed even when addonloader is not running.
@@ -49,6 +51,7 @@ public final class MenuRegistry {
 		executable = new MappedMenu(new String[]{"Execute", "Debug", "Set as Default"},new String[]{ICProgram, ICDebug, ICDefault});
 		bluetooth_dev = new MappedMenu(new String[]{"Remove"},new String[]{ICDelete});
 		boot_menu = new MappedMenu(new String[]{"Shutdown", "Cancel"}, new String[]{IC_BOOT, ICNo});
+		wifimenu = new MappedMenu(new String[]{"Search"}, new String[]{ICWifi});
 		
 		if(AddonLoader.isDisabled)
 		{

@@ -519,7 +519,7 @@ public class MainMenu implements Menu {
 	private void mainRunDefault()
 	{
 		File file = getDefaultProgram();
-		if (file == null)
+		if(file == null)
 		{
 	   		msg("No default set");
 		}
@@ -794,48 +794,42 @@ public class MainMenu implements Menu {
 			icons[0] = Icons.ICEV3;
 		}
 		menu.updateIcons();
-		int selection = 0;
-		while(selection >= 0)
+		newScreen(file.getName());
+		LCD.drawString("Size: " + DataSize.formatDataSize(file.length(), DataSize.BYTE), 1, 2);
+		int selection = menu.getSelection(0);
+		switch(selection)
 		{
-			newScreen(file.getName());
-			LCD.drawString("Size: " + DataSize.formatDataSize(file.length(), DataSize.BYTE), 1, 2);
-			selection = menu.getSelection(selection);
-			switch(selection)
+		case 0:
+			if(isDirectory)
 			{
-			case 0:
-				if(isDirectory)
-				{
-					filesMenu(file);
-					selection = -1;
-				}
-				else if(extension.equals("jar"))
-				{
-					executableMenu(file);
-				}
-				else if(extension.equals("wav"))
-				{
-					Sound.playSample(file);
-				}
-				else
-				{
-					try
-					{
-						Viewer.view(file.getPath());
-					}
-					catch(IOException e)
-					{
-						System.err.println("Exception viewing file");
-					}
-				}
-				break;
-			case 1:
-				file.delete();
-				selection = -1;
-				break;
-			default:
-				menu.onExternalAction(selection);
-				break;
+				filesMenu(file);
 			}
+			else if(extension.equals("jar"))
+			{
+				executableMenu(file);
+			}
+			else if(extension.equals("wav"))
+			{
+				Sound.playSample(file);
+			}
+			else
+			{
+				try
+				{
+					Viewer.view(file.getPath());
+				}
+				catch(IOException e)
+				{
+					System.err.println("Exception viewing file");
+				}
+			}
+			break;
+		case 1:
+			file.delete();
+			break;
+		default:
+			menu.onExternalAction(selection);
+			break;
 		}
 	}
 	
@@ -847,68 +841,65 @@ public class MainMenu implements Menu {
 	private void executableMenu(File file)
 	{
 		MappedMenu menu = MenuRegistry.executable;
-		int selection = 0;
 		boolean isTool = file.getAbsolutePath().startsWith(MainMenu.MENU_DIRECTORY);
 		String directory = file.getParent();
-		while(selection >= 0)
+		newScreen(file.getName());
+		int selection = menu.getSelection(0);
+		switch(selection)
 		{
-			newScreen(file.getName());
-			selection = menu.getSelection(selection);
-			switch(selection)
+		case 0:
+			System.out.println("Running program: " + file.getPath());
+			if(isTool)
 			{
-			case 0:
-				System.out.println("Running program: " + file.getPath());
-				if(isTool)
+				MORegistry tr = MORegistry.getRegistry(MORegistry.Type.RUN_TOOL);
+				if(tr.runMethodsB())
 				{
-					MORegistry tr = MORegistry.getRegistry(MORegistry.Type.RUN_TOOL);
-					if(tr.runMethodsB())
-					{
-						execInThisJVM(file);
-					}
-					tr.runMethodsA();
+					execInThisJVM(file);
 				}
-				else
-				{
-					MORegistry tr = MORegistry.getRegistry(MORegistry.Type.RUN_PROG);
-					if(tr.runMethodsB())
-					{
-						JarFile jar = null;
-						try
-						{
-							jar = new JarFile(file);
-							String mainClass = jar.getManifest().getMainAttributes().getValue("Main-class");
-							jar.close();
-							exec(file, JAVA_RUN_CP + file.getPath() + " lejos.internal.ev3.EV3Wrapper " + mainClass, directory);
-						}
-						catch(IOException e)
-						{
-							System.err.println("Exception running program");
-						}
-					}
-					tr.runMethodsA();
-				}
-				break;
-			case 1:
-				System.out.println("Debugging program: " + file.getPath());
-				JarFile jar = null;
-				try
-				{
-					jar = new JarFile(file);
-					String mainClass = jar.getManifest().getMainAttributes().getValue("Main-class");
-					jar.close();
-					exec(file, JAVA_DEBUG_CP + file.getPath() + " lejos.internal.ev3.EV3Wrapper " + mainClass, directory);
-				}
-				catch(IOException e)
-				{
-					System.err.println("Exception running program");
-				}
-				break;
-			case 2:
-				break;
-			default:
-				menu.onExternalAction(selection);
-				break;
+				tr.runMethodsA();
 			}
+			else
+			{
+				MORegistry tr = MORegistry.getRegistry(MORegistry.Type.RUN_PROG);
+				if(tr.runMethodsB())
+				{
+					JarFile jar = null;
+					try
+					{
+						jar = new JarFile(file);
+						String mainClass = jar.getManifest().getMainAttributes().getValue("Main-class");
+						jar.close();
+						exec(file, JAVA_RUN_CP + file.getPath() + " lejos.internal.ev3.EV3Wrapper " + mainClass, directory);
+					}
+					catch(IOException e)
+					{
+						System.err.println("Exception running program");
+					}
+				}
+				tr.runMethodsA();
+			}
+			break;
+		case 1:
+			System.out.println("Debugging program: " + file.getPath());
+			JarFile jar = null;
+			try
+			{
+				jar = new JarFile(file);
+				String mainClass = jar.getManifest().getMainAttributes().getValue("Main-class");
+				jar.close();
+				exec(file, JAVA_DEBUG_CP + file.getPath() + " lejos.internal.ev3.EV3Wrapper " + mainClass, directory);
+			}
+			catch(IOException e)
+			{
+				System.err.println("Exception running program");
+			}
+			break;
+		case 2:
+			Settings.setProperty(defaultProgramProperty, file.getAbsolutePath());
+			break;
+		default:
+			menu.onExternalAction(selection);
+			break;
 		}
 	}
 	
@@ -1387,7 +1378,12 @@ public class MainMenu implements Menu {
 	private void wifiMenu()
 	{
 		//TODO HOOK
-		ListMenu menu = new ListMenu();
+		MappedMenu menu = MenuRegistry.wifimenu;
+		
+	}
+	
+	public void wifiSearch()
+	{
 		System.out.println("Finding access points ...");
 		LocalWifiDevice wifi = Wifi.getLocalDevice("wlan0");
 		String[] names;
@@ -1406,7 +1402,7 @@ public class MainMenu implements Menu {
 			msg("No Access Points found");
 			return;
 		}
-		menu.setItems(names);
+		ListMenu menu = new ListMenu(names);
 		
 		int selection = 0;
 		while(selection >= 0)

@@ -2,7 +2,6 @@ package com.ec.entries;
 
 import com.ec.addonloader.menu.MappedMenu;
 import com.ec.addonloader.menu.MenuEntry;
-import com.ec.addonloader.util.Icons;
 import com.ec.main.KeyStorage;
 import com.ec.main.Main;
 
@@ -16,12 +15,12 @@ public class APDetail extends MenuEntry {
 	
 	public APDetail()
 	{
-		super("Manage Keys", Icons.IC_LIST);
+		super("Manage Keys", com.ec.addonloader.lib.Icons.IC_LIST);
 		this.updateList = false;
 	}
 	
 	@Override
-	public void onEntrySelected()
+	public void run()
 	{
 		try
 		{

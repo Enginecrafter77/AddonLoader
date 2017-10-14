@@ -2,8 +2,8 @@ package com.ec.addonloader.menu;
 
 import java.util.ArrayList;
 
-import com.ec.addonloader.util.ExtraCarrier;
-import com.ec.addonloader.util.Icons;
+import com.ec.addonloader.lib.ExtraCarrier;
+import com.ec.addonloader.lib.Icons;
 
 import lejos.ev3.startup.GraphicMenu;
 import lejos.ev3.startup.MainMenu;
@@ -99,7 +99,7 @@ public class MappedMenu extends GraphicMenu implements ExtraCarrier<String>{
 	{
 		if(parent != null)
 		{
-			this.parent.addMenuEntry(new GenericMenuEntry(name, icon, this));
+			this.parent.addMenuEntry(new MenuEntry(name, icon, this));
 		}
 	}
 	
@@ -183,7 +183,7 @@ public class MappedMenu extends GraphicMenu implements ExtraCarrier<String>{
 	{
 		if(selection >= 0)
 		{
-			this.getCustomEntry(selection).onEntrySelected();
+			this.getCustomEntry(selection).run();
 		}
 	}
 	
@@ -204,27 +204,6 @@ public class MappedMenu extends GraphicMenu implements ExtraCarrier<String>{
 	public static void newScreen()
 	{
 		MainMenu.self.newScreen();
-	}
-	
-	/**
-	 * Class used to create auto-add menu entry.
-	 * @author Enginecrafter77
-	 */
-	private static final class GenericMenuEntry extends MenuEntry
-	{
-		private final MappedMenu menu;
-		
-		private GenericMenuEntry(String name, String icon, MappedMenu menu)
-		{
-			super(name, icon);
-			this.menu = menu;
-		}
-		
-		@Override
-		public MappedMenu provideMenu()
-		{
-			return menu;
-		}
 	}
 
 }

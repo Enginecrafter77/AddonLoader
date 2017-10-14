@@ -1,4 +1,4 @@
-package com.ec.addonloader.util;
+package com.ec.addonloader.lib;
 
 import lejos.hardware.lcd.Image;
 

@@ -4,11 +4,11 @@ import com.ec.addonloader.main.MenuAddon;
 import com.ec.addonloader.main.MenuRegistry;
 import com.ec.addonloader.menu.MappedMenu;
 import com.ec.addonloader.menu.MenuEntry;
-import com.ec.addonloader.util.Icons;
+import com.ec.addonloader.lib.Icons;
 
 import lejos.ev3.startup.ListMenu;
 
-public class AddonList extends MenuEntry{
+public class AddonList extends MenuEntry {
 
 	public AddonList()
 	{
@@ -16,7 +16,7 @@ public class AddonList extends MenuEntry{
 	}
 	
 	@Override
-	public void onEntrySelected()
+	public void run()
 	{
 		MenuAddon[] addons = MenuRegistry.getAddons();
 		String[] items = new String[addons.length];

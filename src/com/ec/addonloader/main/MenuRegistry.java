@@ -1,6 +1,6 @@
 package com.ec.addonloader.main;
 
-import static com.ec.addonloader.util.Icons.*;
+import static com.ec.addonloader.lib.Icons.*;
 
 import com.ec.addonloader.lib.MenuUtils;
 import com.ec.addonloader.menu.MappedMenu;
@@ -19,18 +19,16 @@ public final class MenuRegistry {
 	public static MappedMenu system;
 	/** The sound menu */
 	public static MappedMenu sound;
-	/** The bluetooth */
+	/** The bluetooth menu */
 	public static MappedMenu bluetooth;
-	/** The file menu */
+	/** The generic file menu */
 	public static MappedMenu file;
-	/** The executable menu */
+	/** The executable file menu */
 	public static MappedMenu executable;
 	/** Menu for bluetooth device */
 	public static MappedMenu bluetooth_dev;
 	/** The menu displayed when pressing escape in main menu.*/
 	public static MappedMenu boot_menu;
-	/** Menu displayed when connecting to wifi */
-	public static MappedMenu wifimenu;
 	
 	/**
 	 * Called internally to initialize all the menus. Needed even when addonloader is not running.
@@ -47,19 +45,18 @@ public final class MenuRegistry {
 		bluetooth = new MappedMenu(
 				new String[]{"Search/Pair", "Devices", "Visibility", "Change PIN", "Information"},
 				new String[]{ICSearch,ICEV3,ICVisibility,ICPIN,ICInfo});
-		file = new MappedMenu(new String[]{"", "Delete"},new String[]{ICDefault, ICDelete});
-		executable = new MappedMenu(new String[]{"Execute", "Debug", "Set as Default"},new String[]{ICProgram, ICDebug, ICDefault});
+		file = new MappedMenu(new String[]{"View", "Delete"},new String[]{ICFiles, ICDelete});
+		executable = new MappedMenu(new String[]{"Run", "Debug", "Set as Default", "Delete"},new String[]{ICProgram, ICDebug, ICDefault, ICDelete});
 		bluetooth_dev = new MappedMenu(new String[]{"Remove"},new String[]{ICDelete});
 		boot_menu = new MappedMenu(new String[]{"Shutdown", "Cancel"}, new String[]{IC_BOOT, ICNo});
-		wifimenu = new MappedMenu(new String[]{"Search"}, new String[]{ICWifi});
 		
 		if(AddonLoader.isDisabled)
 		{
 			system.addMenuEntry(new MenuEntry("Enable AL", ICTools){
 				@Override
-				public void onEntrySelected()
+				public void run()
 				{
-					if(MenuUtils.getYesNo("Enable Addon Loader?", false))
+					if(MenuUtils.askConfirm("Enable Addon Loader?", false))
 					{
 						AddonLoader.instance.props.setProperty("addonloader.disabled", "false");
 						AddonLoader.instance.saveSettings();

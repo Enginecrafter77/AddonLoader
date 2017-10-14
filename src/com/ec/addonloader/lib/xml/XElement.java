@@ -7,12 +7,10 @@ import java.util.Iterator;
 import java.util.Objects;
 
 import com.ec.addonloader.lib.DoubleObject;
-
 /**
- * This is a class that provides access for simple,
- * modificated xml tree, tags and their variables.
+ * This is a class that provides access for simple xml element, its tags and variables.
  * @author Enginecrafter77.
- * @version 1.3.4720b
+ * @version 1.3.4721b
  */
 public class XElement {
     
@@ -24,7 +22,7 @@ public class XElement {
     private final ArrayList<Field> fields;
     /** An element ID */
     public final String name;
-	private final StringBuilder content;
+	protected final StringBuilder content;
 	
     /**
      * A common constructor used to initialize the element.
@@ -81,31 +79,38 @@ public class XElement {
         }
     }
 	
-	protected void addContent(char s)
-	{
-		this.content.append(s);
-	}
-	
 	public String getContent()
 	{
 		return this.content.toString();
 	}
     
-    /**
+	/**
      * Prints tree in print stream.
      * @param tab A tabulating character.
      * @param p PrintStream to print to.
      */
     public void printTree(String tab, PrintStream p)
     {
-        p.println(tab + this.name + this.fields + (!this.content.toString().equals("") ? (" {" + this.getContent() + "}") : ""));
-        if(child.size() > 0)
-        {
-            for(int i = 0; i < child.size(); i++)
-            {
-                child.get(i).printTree(tab + "  ", p);
-            }
-        }
+    	p.print(tab);
+    	p.print(this.name);
+    	p.print("[" + this.fields + ']');
+    	if(this.hasContent())
+    	{
+    		p.print("{" + this.content.toString() + '}');
+    	}
+    	p.println();
+    	if(this.hasChild())
+    	{
+	        for(int i = 0; i < this.child.size(); i++)
+	        {
+	        	printTree(tab + "  ", p);
+	        }
+    	}
+    }
+    
+    public boolean hasContent()
+    {
+    	return this.content.length() > 0;
     }
     
     public boolean equalNames(String s)

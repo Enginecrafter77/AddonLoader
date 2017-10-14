@@ -1,11 +1,9 @@
 package com.ec.addonloader.lib;
 
-import static com.ec.addonloader.util.Icons.ICNo;
-import static com.ec.addonloader.util.Icons.ICYes;
+import static com.ec.addonloader.lib.Icons.ICNo;
+import static com.ec.addonloader.lib.Icons.ICYes;
 
 import java.io.File;
-
-import com.ec.addonloader.lib.ResourceLocation.DataSize;
 
 import lejos.ev3.startup.GraphicMenu;
 import lejos.ev3.startup.MainMenu;
@@ -13,13 +11,14 @@ import lejos.ev3.startup.Utils;
 import lejos.hardware.Button;
 
 /**
- * Class used to store random functions used whereever in the code to keep the code neat.
+ * Class used to store random functions used wherever in the code to keep the code clean.
  * @author Enginecrafter77
  */
 public class MenuUtils {
 	
 	/**
-	 * Appends <b>diff</b> to <b>num</b> until <b>num</b> is equal to <b>max</b>. Then sets <b>num</b> to <b>min</b>.
+	 * Basically, it adds number until it reaches it's roof, then it starts over.
+	 * Mathematically: Appends <b>diff</b> to <b>num</b> until <b>num</b> is equal to <b>max</b>. Then sets <b>num</b> to <b>min</b>.
 	 * @param num
 	 * @param min
 	 * @param max
@@ -37,7 +36,7 @@ public class MenuUtils {
 	}
 	
 	/**
-	 * Removes al files from directory with little more care on IO bandwidth.
+	 * Removes all files from directory with little more care on IO bandwidth.
 	 * @param ct The directory to empty.
 	 */
 	public static void removeContent(String ct)
@@ -52,28 +51,6 @@ public class MenuUtils {
 	public static String getFreeRam()
 	{
 		return "Free RAM: " + DataSize.formatDataSize(Runtime.getRuntime().freeMemory(), DataSize.BYTE);
-	}
-	
-	/**
-	 * Returns executable type based on jar location.
-	 * @param f The File of jar executable.
-	 * @return Executable type.
-	 */
-	public static int getExecType(File f)
-	{
-		String path = f.getAbsolutePath();
-		if(path.startsWith(MainMenu.SAMPLES_DIRECTORY))
-		{
-			return MainMenu.TYPE_SAMPLE;
-		}
-		else if(path.startsWith(MainMenu.TOOLS_DIRECTORY))
-		{
-			return MainMenu.TYPE_TOOL;
-		}
-		else
-		{
-			return MainMenu.TYPE_PROGRAM;
-		}
 	}
 	
 	/**
@@ -117,7 +94,7 @@ public class MenuUtils {
 	 * @param def A default selection.
 	 * @return True if pressed yes.
 	 */
-	public static boolean getYesNo(String prompt, boolean def)
+	public static boolean askConfirm(String prompt, boolean def)
 	{
 		GraphicMenu menu = new GraphicMenu(new String[]{"No", "Yes"},new String[]{ICNo,ICYes}, 4, prompt, 3);
 		return menu.getSelection(def ? 1 : 0) == 1;
@@ -131,7 +108,7 @@ public class MenuUtils {
 	 * @param buff The number buffer. Loads values into this parameter.
 	 * @param xoffset X offset from 0
 	 * @param line Line on which to display.
-	 * @return If set was commited(ENTER), returns true.
+	 * @return If set was committed(ENTER), returns true.
 	 */
 	public static boolean enterNumber(String title, int digits, int[] buff, int xoffset, int line)
 	{
@@ -182,9 +159,9 @@ public class MenuUtils {
 	}
 	
 	/**
-	 * Customized ersion of {@link #enterNumber(String, int, int[], int, int)} specialized for 4-digit pin.
+	 * Customised version of {@link #enterNumber(String, int, int[], int, int)} specialised for 4-digit pin.
 	 * @param title Screen title.
-	 * @return Pin digits in int array.
+	 * @return Pin digits in integer array.
 	 */
 	public static int[] enterPin(String title)
 	{

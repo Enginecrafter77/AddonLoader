@@ -1,4 +1,4 @@
-package com.ec.addonloader.util;
+package com.ec.addonloader.lib;
 
 public class Icons {
 	

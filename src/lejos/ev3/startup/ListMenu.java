@@ -11,7 +11,6 @@ import lejos.hardware.lcd.TextLCD;
  * Abrams version of a more detailed GraphicMenu for the file menu.
  * 
  * @author Abram Early
- *
  */
 public class ListMenu extends GraphicMenu {
 	

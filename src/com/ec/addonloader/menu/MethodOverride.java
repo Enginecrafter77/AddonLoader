@@ -1,7 +1,9 @@
 package com.ec.addonloader.menu;
 
+import com.ec.addonloader.main.MORegistry;
+
 /**
- * The interface that stores code snippet runned by
+ * The interface that stores code snippet run by
  * the manager {@link MORegistry}. It extends the Runnable interface,
  * so it can be called by the manager. It also includes two methods,
  * {@link #disableDefaultCode()} and {@link #runBefore()}.

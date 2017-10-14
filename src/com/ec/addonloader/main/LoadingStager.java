@@ -2,7 +2,7 @@ package com.ec.addonloader.main;
 
 import java.util.ArrayList;
 
-import com.ec.addonloader.util.AddonException;
+import com.ec.addonloader.lib.AddonException;
 
 public class LoadingStager {
 	

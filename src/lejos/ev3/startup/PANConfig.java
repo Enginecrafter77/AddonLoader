@@ -8,8 +8,8 @@ import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.List;
 
+import com.ec.addonloader.lib.Icons;
 import com.ec.addonloader.lib.MenuUtils;
-import com.ec.addonloader.util.Icons;
 
 import lejos.hardware.Bluetooth;
 import lejos.hardware.BluetoothException;
@@ -57,7 +57,7 @@ public class PANConfig {
 	{
 		System.out.println("Save PAN config");
 		try {
-			PrintWriter out = new PrintWriter(MainMenu.PAN_CONFIG);
+			PrintWriter out = new PrintWriter(Reference.PAN_CONFIG);
 			out.print(modeIDS[curMode] + " " + BTAPName.replace(" ", "\\ ") + " " + BTAPAddress);
 			for(String ip : IPAddresses)
 				out.print(" " + ip);
@@ -66,7 +66,7 @@ public class PANConfig {
 			out.close();
 			changed = false;
 		} catch (IOException e) {
-			System.out.println("Failed to write PAN config to " + MainMenu.PAN_CONFIG + ": " + e);
+			System.out.println("Failed to write PAN config to " + Reference.PAN_CONFIG + ": " + e);
 		}			
 	}
 	
@@ -82,13 +82,13 @@ public class PANConfig {
 		System.out.println("Load PAN config");
 		String[] vals = null;
 		try {
-			BufferedReader in = new BufferedReader(new FileReader(MainMenu.PAN_CONFIG));
+			BufferedReader in = new BufferedReader(new FileReader(Reference.PAN_CONFIG));
 			// nasty cludge preserve escaped spaces (convert them to no-break space
 			String line = in.readLine().replace("\\ ", "\u00a0");
 			vals = line.split("\\s+");
 			in.close();
 		} catch (IOException e) {
-			System.out.println("Failed to load PAN config from " + MainMenu.PAN_CONFIG + ": " + e);
+			System.out.println("Failed to load PAN config from " + Reference.PAN_CONFIG + ": " + e);
 		}			
 		String mode = getConfigString(vals, 0, modeIDS[MODE_NONE]);
 		// turn mode into value
@@ -348,7 +348,7 @@ public class PANConfig {
 				IPAddresses[selection] = getIPAddress(IPNames[selection], IPAddresses[selection]);
 			else if (selection == IPAddresses.length)
 			{
-				if(MenuUtils.getYesNo("Persist Connection", persist.equalsIgnoreCase("Y")))
+				if(MenuUtils.askConfirm("Persist Connection", persist.equalsIgnoreCase("Y")))
 				{
 					persist = "Y";
 				}
@@ -467,7 +467,7 @@ public class PANConfig {
 			WaitScreen.instance.begin("Restart\nPAN\nServices");
 			WaitScreen.instance.status("Save configuration");
 			saveConfig();
-			MainMenu.self.startNetwork(MainMenu.START_PAN, true);
+			MainMenu.self.startNetwork(Reference.START_PAN, true);
 			WaitScreen.instance.status("Restart name server");
 			BrickFinder.stopDiscoveryServer();
 			BrickFinder.startDiscoveryServer(curMode == MODE_APP);

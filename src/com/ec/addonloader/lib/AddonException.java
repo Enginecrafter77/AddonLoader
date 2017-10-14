@@ -1,4 +1,4 @@
-package com.ec.addonloader.util;
+package com.ec.addonloader.lib;
 
 import com.ec.addonloader.main.MenuAddon;
 import com.ec.addonloader.main.LoadingStager.LoadingStage;

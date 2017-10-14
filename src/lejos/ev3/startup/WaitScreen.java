@@ -1,7 +1,7 @@
 package lejos.ev3.startup;
 
-import static com.ec.addonloader.util.Icons.IMG_HOURGLASS;
-import static com.ec.addonloader.util.Icons.stringToBytes8;
+import static com.ec.addonloader.lib.Icons.IMG_HOURGLASS;
+import static com.ec.addonloader.lib.Icons.stringToBytes8;
 
 import lejos.hardware.ev3.LocalEV3;
 import lejos.hardware.lcd.Font;

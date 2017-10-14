@@ -108,7 +108,7 @@ public class BatteryIndicator
 		this.checkLevels();
 		if(titleString == null){titleString = "";}
 		lcd.drawString(titleString, 8 - (titleString.length()/2), 0);
-		if(isOk || (System.currentTimeMillis() % (2*Config.ICON_BATTERY_BLINK)) < Config.ICON_BATTERY_BLINK)
+		if(isOk || (System.currentTimeMillis() % (2*Reference.ICON_BATTERY_BLINK)) < Reference.ICON_BATTERY_BLINK)
 		{
 			this.drawFormattedLevel(0, 0);
 		}

@@ -49,6 +49,10 @@ public class ExceptionHandler implements UncaughtExceptionHandler {
 	    System.exit(1);
 	}
 	
+	/**
+	 * Handler used when debugging the menu. Does not shutdown the system because the errors are common in debugging.
+	 * @author Enginecrafter77
+	 */
 	public static class DebugHandler implements UncaughtExceptionHandler
 	{
 		@Override

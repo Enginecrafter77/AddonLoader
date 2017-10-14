@@ -4,35 +4,63 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.Reader;
 import java.util.ArrayList;
 
 import com.ec.addonloader.lib.DoubleObject;
+import com.ec.addonloader.lib.ResourceLocation;
 /**
- * A class that can parse custom xml-trees.
+ * A class that can parse basic xml trees.
  * Note that when it encounters some errors
  * in parsing customly typed xml file, it won't
  * produce exception, but will act strangely.
- * Speed: 20ms/file.
  * @author Enginecrafter77
- * @version 1.3.4720b
+ * @version 1.3.4721b
  */
 public class XParser {
     
     public static final boolean debug = false;
-    private final File f;
     public final XElement rootElement;
 	
     public static final XElement call(File f) throws IOException
     {
-        XParser p = new XParser(f);
+    	XParser p = new XParser(new FileReader(f));
         return p.rootElement;
     }
     
-    public XParser(File f) throws IOException
+    public static final XElement call(ResourceLocation rl) throws IOException
     {
-        this.f = f;
+    	XParser p = new XParser(new InputStreamReader(rl.address().openStream()));
+        return p.rootElement;
+    }
+    
+    public static final void recursiveNL(XElement el, char nlname)
+    {
+    	if(el.hasContent())
+    	{
+    		for(int i = 0; i < el.content.length(); i++)
+    		{
+    			if(el.content.charAt(i) == nlname)
+    			{
+    				el.content.setCharAt(i, '\n');
+    			}
+    		}
+    	}
+    	
+    	if(el.hasChild())
+    	{
+    		for(int i = 0; i < el.child.size(); i++)
+    		{
+    			recursiveNL(el.child.get(i), nlname);
+    		}
+    	}
+    }
+    
+    public XParser(Reader rd) throws IOException
+    {
         rootElement = new XElement();
-        parseXML(rootElement, this.readFile());
+        parseXML(rootElement, this.readFile(rd));
     }
     
     /**
@@ -40,9 +68,9 @@ public class XParser {
      * @return ArrayList
      * @throws IOException
      */
-    private ArrayList<String> readFile() throws IOException
+    private ArrayList<String> readFile(Reader rd) throws IOException
     {
-        BufferedReader b = new BufferedReader(new FileReader(f));
+        BufferedReader b = new BufferedReader(rd);
         ArrayList<String> file = new ArrayList<>();
         String line;
         while((line = b.readLine()) != null)
@@ -168,7 +196,7 @@ public class XParser {
                 }
 				else
 				{
-					lastParent.addContent(ch);
+					lastParent.content.append(ch);
 				}
             }
             

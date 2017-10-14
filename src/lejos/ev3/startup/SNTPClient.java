@@ -33,7 +33,7 @@ import java.text.DecimalFormat;
  *  
  * @author Adam Buckley
  */
-public class SntpClient
+public class SNTPClient
 {
 	public static String getDate(String serverName) throws IOException
 	{

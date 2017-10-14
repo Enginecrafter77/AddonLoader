@@ -1,19 +1,20 @@
-package com.ec.addonloader.menu;
+package com.ec.addonloader.main;
 
 import java.util.ArrayList;
 import java.util.Iterator;
 
-import com.ec.addonloader.util.ExtraCarrier;
+import com.ec.addonloader.lib.ExtraCarrier;
+import com.ec.addonloader.menu.MethodOverride;
 
 /**
  * The class that provides menu overrides.
  * Menu overrides are basically code snippets that
  * are run when something is being launched, or just after it.
- * It is an dynamical way to hardly modify menu behavior, but it's
+ * It is an dynamic way to hardly modify menu behaviour, but it's
  * a bit RAM costly. Is could be done differently, but with more CPU time
  * wasted on reflection-searching classes in a tradeoff, so this was the better choice.
  * The registry stores interfaces, {@link MethodOverride}, that represent the
- * actual code runned after or before method.
+ * actual code run after or before method.
  * @author Enginecrafter77
  * @see MethodOverride
  */
@@ -24,7 +25,7 @@ public class MORegistry extends ArrayList<MethodOverride> implements ExtraCarrie
 	private String arg;
 	
 	/**
-	 * Called internally to initialize method registers.
+	 * Called internally to initialise method registers.
 	 * Calling this twice will screw up already set up overrides.
 	 */
 	public static void init()
@@ -37,8 +38,8 @@ public class MORegistry extends ArrayList<MethodOverride> implements ExtraCarrie
 	}
 	
 	/**
-	 * Gest the desired registry based on provided {@link Type}
-	 * @param type The type of override to implement. Aka the method to override.
+	 * Gets the desired registry based on provided {@link Type}
+	 * @param type Override class, where it belongs.
 	 * @return The matching MORegistry.
 	 */
 	public static MORegistry getRegistry(MORegistry.Type type)
@@ -119,9 +120,9 @@ public class MORegistry extends ArrayList<MethodOverride> implements ExtraCarrie
 	}
 	
 	/**
-	 * Enum of types of {@link MORegistry}.
+	 * Enumeration of types of {@link MORegistry}.
 	 * MORegistries are added dynamically only
-	 * by adding an entry to this enum.
+	 * by adding an entry to this enumeration.
 	 * @author Enginecrafter77
 	 */
 	public static enum Type

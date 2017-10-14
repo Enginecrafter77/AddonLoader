@@ -1,6 +1,6 @@
 package lejos.ev3.startup;
 
-import static com.ec.addonloader.util.Icons.*;
+import static com.ec.addonloader.lib.Icons.*;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -22,18 +22,15 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.jar.JarFile;
 
+import com.ec.addonloader.lib.LoadingAnimation;
 import com.ec.addonloader.lib.MenuUtils;
-import com.ec.addonloader.lib.ResourceLocation.DataSize;
+import com.ec.addonloader.lib.DataSize;
 import com.ec.addonloader.main.*;
 import com.ec.addonloader.menu.MappedMenu;
-import com.ec.addonloader.menu.MORegistry;
-import com.ec.addonloader.util.Icons;
-import com.ec.addonloader.util.LoadingAnimation;
 
 import lejos.ev3.startup.ListMenu;
 import lejos.ev3.startup.Utils;
 import lejos.utility.Delay;
-import lejos.ev3.startup.Config;
 import lejos.hardware.Battery;
 import lejos.hardware.Bluetooth;
 import lejos.hardware.BluetoothException;
@@ -58,46 +55,26 @@ import lejos.internal.io.NativeHCI.LocalVersion;
 import lejos.remote.ev3.Menu;
 import lejos.remote.ev3.RMIRemoteEV3;
 
+import static lejos.ev3.startup.Reference.*;
+
 @SuppressWarnings({"restriction"})
 public class MainMenu implements Menu {	
-	private static final String JAVA_RUN_CP = "jrun -cp ";
-	private static final String JAVA_DEBUG_CP = "jrun -Xdebug -Xrunjdwp:transport=dt_socket,server=y,address=8000,suspend=y -cp ";
-	
-	public static final int TYPE_PROGRAM = 0;
-	public static final int TYPE_SAMPLE = 1;
-	public static final int TYPE_TOOL = 2;
-	
-	private static final String defaultProgramProperty = "lejos.default_program";
-	private static final String defaultProgramAutoRunProperty = "lejos.default_autoRun";
-	private static final String pinProperty = "lejos.bluetooth_pin";
-	private static final String ntpProperty = "lejos.ntp_host";
-	
-	public static final String PROGRAMS_DIRECTORY = "/home/lejos/programs";
-	public static final String LIB_DIRECTORY = "/home/lejos/lib";
-	public static final String SAMPLES_DIRECTORY = "/home/root/lejos/samples";
-	public static final String TOOLS_DIRECTORY = "/home/root/lejos/tools";
-	public static final String MENU_DIRECTORY = "/home/root/lejos/menu";
-	public static final String START_BLUETOOTH = "/home/root/lejos/bin/startbt";
-	public static final String START_WLAN = "/home/root/lejos/bin/startwlan";
-	public static final String START_PAN = "/home/root/lejos/bin/startpan";
-	public static final String PAN_CONFIG = "/home/root/lejos/config/pan.config";
-	public static final String WLAN_INTERFACE = "wlan0";
-	public static final String PAN_INTERFACE = "br0";
-	
-	protected static final int IND_SUSPEND = -1;
-	protected static final int IND_NONE = 0;
-	protected static final int IND_NORMAL = 1;
-	protected static final int IND_FULL = 2;
 	
 	public static AddonLoader al;
-	public PANConfig panConfig = new PANConfig();
-	public static String hostname;
 	public static List<String> ips = new ArrayList<String>();
-	public static String panAddress;
-	public static String rmiAddress = "";
-	public static String wlanAddress;
+	public static String hostname, panAddress, rmiAddress, wlanAddress;
 	public static MainMenu self;
 	public static TextLCD lcd;
+	
+	private static String version = "Unknown";
+	private static GraphicMenu curMenu;
+	private static LocalBTDevice bt;
+	private static Process program; // the running user program, if any
+	private static String programName; // The name of the running program
+	private static EchoThread echoIn, echoErr;
+	private static boolean suspend = false;
+	
+	public PANConfig panConfig = new PANConfig();
 	public int timeout = 0;
 	
 	protected IndicatorThread ind = new IndicatorThread();
@@ -106,27 +83,20 @@ public class MainMenu implements Menu {
 	protected RConsole rcons = new RConsole();
 	protected RemoteMenuThread remoteMenuThread = new RemoteMenuThread();
 	
-	private static String version = "Unknown";
-	private boolean btVisibility;
-	private int shouldExit;
-	private static GraphicMenu curMenu;
-	private static LocalBTDevice bt;
-	private static Process program; // the running user program, if any
-	private static String programName; // The name of the running program
-	private static boolean suspend = false;
-	private static EchoThread echoIn, echoErr;
 	private WaitScreen waitScreen;
+	private int shouldExit;
 	
 	public static void main(String[] args) throws Exception
 	{
 		//DEBUGME Debuggins options
-		System.setOut(new PrintStream("/tmp/menu-out"));
-		System.setErr(new PrintStream("/tmp/menu-err"));
+		System.setOut(new PrintStream("/var/volatile/log/menu-out"));
+		System.setErr(new PrintStream("/var/volatile/log/menu-err"));
 		LoadingAnimation a = new LoadingAnimation();
+		a.start("Starting Menu");
+		a.setState("Booting", 10);
 		waitForEV3BootComplete();
 		LocalEV3.get().getLED().setPattern(1);
-		a.start("Starting Menu");
-		a.setState("Loading addons", 10);
+		a.setState("Loading addons", 20);
 		AddonLoader.init();
 		al = AddonLoader.instance;
 		System.out.println("Menu started");
@@ -238,13 +208,13 @@ public class MainMenu implements Menu {
 					mainRunDefault();
 					break;
 				case 1:
-					filesMenu(PROGRAMS_DIRECTORY);
+					filesMenu(PROGRAMS_DIRECTORY, false);
 					break;
 				case 2:
 					samplesMenu();
 					break;
 				case 3:
-					toolsMenu();
+					filesMenu(TOOLS_DIRECTORY, true);
 					break;
 				case 4:
 					bluetoothMenu();
@@ -324,8 +294,10 @@ public class MainMenu implements Menu {
 					break;
 				case 4:
 					bluetoothInformation();
+					break;
 				default:
 					menu.onExternalAction(selection);
+					break;
 			}
 		}
 	}
@@ -335,10 +307,9 @@ public class MainMenu implements Menu {
 	 */
 	public void changeBTVisibility()
 	{
-		btVisibility = !bt.getVisibility();
 		try
 		{
-			bt.setVisibility(btVisibility);
+			bt.setVisibility(!bt.getVisibility());
 		}
 		catch(BluetoothException e)
 		{
@@ -552,13 +523,13 @@ public class MainMenu implements Menu {
 		while(selection >= 0)
 		{
 			this.newScreen("System");
-			lcd.drawString("Battery: " + (Math.round(Battery.getVoltage() * 1000.0F) / 1000.0F), 1, 1);
+			lcd.drawString("Battery: " + Battery.getVoltageMilliVolt() + "mV", 1, 1);
 			lcd.drawString(MenuUtils.getFreeRam(), 1, 2);
 			selection = menu.getSelection(selection);
 			switch(selection)
 			{
 			case 0:
-				if(MenuUtils.getYesNo("Delete all programs?", false))
+				if(MenuUtils.askConfirm("Delete all programs?", false))
 				{
 					MenuUtils.removeContent("/home/lejos/programs");
 				}
@@ -625,7 +596,7 @@ public class MainMenu implements Menu {
 		lcd.drawString(f.getName(), 1, 3);
 		
 		String current = Settings.getProperty(defaultProgramAutoRunProperty, "");
-		boolean yes = MenuUtils.getYesNo("Run at power up?", current.equals("ON"));
+		boolean yes = MenuUtils.askConfirm("Run at power up?", current.equals("ON"));
 		if(yes)
 		{
 			Settings.setProperty(defaultProgramAutoRunProperty, yes ? "ON" : "OFF");
@@ -735,7 +706,7 @@ public class MainMenu implements Menu {
 			lcd.drawString("leJOS:", 0, 2);
 			lcd.drawString(version, 6, 2);
 			lcd.drawString("Menu:", 0, 3);
-			lcd.drawString(Config.VERSION, 6, 3);
+			lcd.drawString(Reference.VERSION, 6, 3);
 			getButtonPress();
 		}
 		m.runMethodsA();
@@ -766,47 +737,26 @@ public class MainMenu implements Menu {
 	 * @param file
 	 * @author Enginecrafter77
 	 */
-	private void fileMenu(File file)
+	private void fileMenu(File file, boolean tools)
 	{
 		MappedMenu menu = MenuRegistry.file;
-		String[] items = menu.getItems();
-		String[] icons = menu.getIcons();
 		String extension = Utils.getExtension(file.getName());
-		boolean isDirectory = file.isDirectory();
-		if(isDirectory)
-		{
-			items[0] = "Open";
-			icons[0] = Icons.ICFiles;
-		}
-		else if(extension.equals("jar"))
-		{
-			items[0] = "Executable";
-			icons[0] = Icons.ICEV3;
-		}
-		else if(extension.equals("wav"))
-		{
-			items[0] = "Play File";
-			icons[0] = Icons.ICSound;
-		}
-		else
-		{
-			items[0] = "View File";
-			icons[0] = Icons.ICEV3;
-		}
-		menu.updateIcons();
 		newScreen(file.getName());
 		LCD.drawString("Size: " + DataSize.formatDataSize(file.length(), DataSize.BYTE), 1, 2);
+		if(extension.equals("jar"))
+		{
+			menu = MenuRegistry.executable;
+			executableMenu(file, tools, menu);
+			return;
+		}
+		
 		int selection = menu.getSelection(0);
 		switch(selection)
 		{
 		case 0:
-			if(isDirectory)
+			if(file.isDirectory())
 			{
-				filesMenu(file);
-			}
-			else if(extension.equals("jar"))
-			{
-				executableMenu(file);
+				filesMenu(file, tools);
 			}
 			else if(extension.equals("wav"))
 			{
@@ -838,12 +788,9 @@ public class MainMenu implements Menu {
 	 * @param file
 	 * @author Enginecrafter77
 	 */
-	private void executableMenu(File file)
+	private void executableMenu(File file, boolean isTool, MappedMenu menu)
 	{
-		MappedMenu menu = MenuRegistry.executable;
-		boolean isTool = file.getAbsolutePath().startsWith(MainMenu.MENU_DIRECTORY);
 		String directory = file.getParent();
-		newScreen(file.getName());
 		int selection = menu.getSelection(0);
 		switch(selection)
 		{
@@ -863,10 +810,9 @@ public class MainMenu implements Menu {
 				MORegistry tr = MORegistry.getRegistry(MORegistry.Type.RUN_PROG);
 				if(tr.runMethodsB())
 				{
-					JarFile jar = null;
 					try
 					{
-						jar = new JarFile(file);
+						JarFile jar = new JarFile(file);
 						String mainClass = jar.getManifest().getMainAttributes().getValue("Main-class");
 						jar.close();
 						exec(file, JAVA_RUN_CP + file.getPath() + " lejos.internal.ev3.EV3Wrapper " + mainClass, directory);
@@ -897,31 +843,14 @@ public class MainMenu implements Menu {
 		case 2:
 			Settings.setProperty(defaultProgramProperty, file.getAbsolutePath());
 			break;
+		case 3:
+			file.delete();
+			break;
 		default:
 			menu.onExternalAction(selection);
 			break;
 		}
 	}
-	
-	/**
-	 * Present the menu for a menu tool.
-	 * @param file
-	 */
-	private void toolMenu(File file)
-	{
-		MORegistry m = MORegistry.getRegistry(MORegistry.Type.RUN_TOOL);
-		if(m.runMethodsB())
-		{
-			String fileName = file.getName();
-			String ext = Utils.getExtension(fileName);
-			if(ext.equals("jar"))
-			{
-				execInThisJVM(file);
-			}
-		}
-		m.runMethodsA();
-	}
-
 	
 	/**
 	 * Execute a program and display its output to System.out and error stream to System.err
@@ -1041,7 +970,7 @@ public class MainMenu implements Menu {
 	 * Allow the user to choose a file for further operations.
 	 * Rewritten by Enginecrafter77
 	 */
-	private void filesMenu(File dir)
+	private void filesMenu(File dir, boolean tools)
 	{
 		ListMenu menu = new ListMenu();
 		File[] files = dir.listFiles();;
@@ -1054,67 +983,16 @@ public class MainMenu implements Menu {
 			selection = menu.getSelection(selection);
 			if(selection >= 0)
 			{
-				fileMenu(files[selection]);
+				fileMenu(files[selection], tools);
 				files = dir.listFiles();
 				menu.setItems(Utils.filesToString(files));
 			}
 		}
 	}
 	
-	private void filesMenu(String dir)
+	private void filesMenu(String dir, boolean tools)
 	{
-		this.filesMenu(new File(dir));
-	}
-	
-	/**
-	 * Display the tools from the tools directory.
-	 * Allow the user to choose a file for further operations.
-	 */
-	private void toolsMenu()
-	{
-		ListMenu menu = new ListMenu();
-		File[] files = new File(TOOLS_DIRECTORY).listFiles();
-		String[] items = new String[files.length];
-		if(files.length == 0)
-		{
-			msg("No tools found.");
-			return;
-		}
-		for(int i = 0; i < files.length; i++)
-		{
-			items[i] = formatFileName(files[i].getName());
-		}
-		menu.setItems(items);
-		
-		int selection = 0;
-		while(selection >= 0)
-		{
-			newScreen("Tools");			
-			selection = menu.getSelection(selection);
-			if (selection >= 0)
-			{
-				toolMenu(files[selection]);
-			}
-		}
-	}
-	
-	/**
-	 * Method to add spaces before capital letters and remove .jar extension.
-	 * 
-	 * @param fileName
-	 * @return
-	 */
-	static private String formatFileName(String fileName) {
-		StringBuffer formattedName = new StringBuffer(""+fileName.charAt(0));
-		for(int i=1;i<fileName.length();i++) { //Skip the first letter-can't put space before first word
-			if(fileName.charAt(i)=='.') break;
-			if(Character.isUpperCase(fileName.charAt(i))) {
-				formattedName.append(' ');
-			}
-			formattedName.append(fileName.charAt(i));
-			
-		}
-		return formattedName.toString();
+		this.filesMenu(new File(dir), tools);
 	}
 	
 	/**
@@ -1123,6 +1001,7 @@ public class MainMenu implements Menu {
 	 */
 	private void samplesMenu()
 	{
+		//TODO FIX
 		ListMenu menu = new ListMenu();
 		//System.out.println("Finding files ...");
 		int selection = 0;
@@ -1152,7 +1031,7 @@ public class MainMenu implements Menu {
 			menu.setItems(fileNames,icons);
 			selection = menu.getSelection(selection);
 			if (selection >= 0)
-				fileMenu(files[selection]);
+				fileMenu(files[selection], false);
 		} while (selection >= 0);
 	}
 
@@ -1378,12 +1257,6 @@ public class MainMenu implements Menu {
 	private void wifiMenu()
 	{
 		//TODO HOOK
-		MappedMenu menu = MenuRegistry.wifimenu;
-		
-	}
-	
-	public void wifiSearch()
-	{
 		System.out.println("Finding access points ...");
 		LocalWifiDevice wifi = Wifi.getLocalDevice("wlan0");
 		String[] names;
@@ -1393,27 +1266,26 @@ public class MainMenu implements Menu {
 		}
 		catch(Exception e)
 		{
-			System.err.println("Exception getting access points" +e);
-			names = new String[0];
-		}
-		
-		if(names.length == 0)
-		{
+			System.err.println("Exception getting access points: " + e);
 			msg("No Access Points found");
 			return;
+		}
+		for(int i = 0; i < names.length; i++)
+		{
+			if(names[i].isEmpty())
+			{
+				names[i] = "[HIDDEN]";
+			}
 		}
 		ListMenu menu = new ListMenu(names);
 		
 		int selection = 0;
-		while(selection >= 0)
+		newScreen("WiFi");
+		selection = menu.getSelection(selection);
+		if(selection >= 0)
 		{
-			newScreen("Access Pts");
-			selection = menu.getSelection(selection);
-			if(selection >= 0)
-			{
-				NetUtils.connectAP(names[selection]);
-			 	selection = -1;
-			}
+			NetUtils.connectAP(names[selection]);
+		 	selection = -1;
 		}
 	}
 	
@@ -1475,7 +1347,7 @@ public class MainMenu implements Menu {
 
 	@Override
 	public String getMenuVersion() {
-		return Config.VERSION;
+		return Reference.VERSION;
 	}
 
 	@Override
@@ -1530,7 +1402,7 @@ public class MainMenu implements Menu {
 		{
 			System.err.println("RMI failed to start: " + e);
 		}
-			
+		
 		//String dt = SntpClient.getDate(Settings.getProperty(ntpProperty, "1.uk.pool.ntp.org"));
 		//System.out.println("Date and time is " + dt);
 		//Runtime.getRuntime().exec("date -s " + dt);

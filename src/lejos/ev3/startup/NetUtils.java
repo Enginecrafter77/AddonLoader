@@ -4,7 +4,6 @@ import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.io.UnsupportedEncodingException;
-import java.net.URL;
 import java.security.NoSuchAlgorithmException;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.KeySpec;
@@ -13,17 +12,16 @@ import javax.crypto.SecretKeyFactory;
 import javax.crypto.spec.PBEKeySpec;
 
 import com.ec.addonloader.lib.ResourceLocation;
-import com.ec.addonloader.lib.ResourceLocation.ResourceType;
-import com.ec.addonloader.menu.MORegistry;
+import com.ec.addonloader.main.MORegistry;
 
 public class NetUtils {
 	
-	public static URL wpastub;
+	public static ResourceLocation wpastub;
 	public static final String WIFI_CONFIG="/home/root/lejos/config/wpa_supplicant.conf";
 	
 	protected static void init()
 	{
-		wpastub = new ResourceLocation(ResourceType.TEXT, "resources/wpa_stub.txt").getFile();
+		wpastub = new ResourceLocation("resources/wpa_stub.txt");
 	}
 	
 	protected static void connectAP(String ap)
@@ -32,7 +30,13 @@ public class NetUtils {
 		m.setExtra(ap);
 		if(m.runMethodsB())
 		{
+			if(ap.equals("[HIDDEN]"))
+			{
+				System.out.println("AP is hidden, requesting ESSID");
+				ap = Keyboard.getString();
+			}
 			System.out.println("Access point is " + ap);
+			
 			String pwd = Keyboard.getString();
 			if(pwd != null)
 			{
@@ -52,7 +56,7 @@ public class NetUtils {
 	{
 		try
 		{
-			BufferedReader br = new BufferedReader(new InputStreamReader(wpastub.openStream()));
+			BufferedReader br = new BufferedReader(new InputStreamReader(wpastub.address().openStream()));
 			PrintWriter pw = new PrintWriter(WIFI_CONFIG);
 			StringBuilder buff = new StringBuilder();
 			String line = new String();
@@ -76,7 +80,7 @@ public class NetUtils {
 		{
 			System.err.println("Failed to write wpa supplication configuration: " + e);
 		}
-		MainMenu.self.startNetwork(MainMenu.START_WLAN, true);
+		MainMenu.self.startNetwork(Reference.START_WLAN, true);
 	}
 	
 	private static void addToLine(StringBuilder line, String search, String append)

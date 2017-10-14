@@ -24,21 +24,22 @@ public class JarMain extends URLClassLoader {
 	    this.f.close();
 	}
 	
-	private void invokeClass(String name, String[] args) throws ClassNotFoundException, NoSuchMethodException, InvocationTargetException {
+	private void invokeClass(String name, String[] args) throws ClassNotFoundException, NoSuchMethodException, InvocationTargetException
+	{
 	    Class<?> c = loadClass(name);
 	    Method m = c.getMethod("main", new Class[] { args.getClass() });
 	    m.setAccessible(true);
 	    int mods = m.getModifiers();
 	    
-	    if (m.getReturnType() != void.class || !Modifier.isStatic(mods) ||
-	        !Modifier.isPublic(mods)) {
+	    if(m.getReturnType() != void.class || !Modifier.isStatic(mods) || !Modifier.isPublic(mods))
+	    {
 	        throw new NoSuchMethodException("main");
 	    }
 	    
-	    try {
-	        m.invoke(null, new Object[] { args });
-	    } catch (IllegalAccessException e) {
-	        // This should not happen, as we have disabled access checks
+	    try
+	    {
+	        m.invoke(null, (Object[])args);
 	    }
+	    catch(IllegalAccessException e){/*This should not happen, as we have disabled access checks*/}
 	}
 }

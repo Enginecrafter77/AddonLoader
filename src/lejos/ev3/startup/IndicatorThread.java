@@ -30,7 +30,7 @@ public class IndicatorThread implements Runnable
 			int updateIPCountdown = 0;
 			while (true)
 			{
-				if (displayState >= MainMenu.IND_NORMAL)
+				if (displayState >= Reference.IND_NORMAL)
 				{
 					if (updateIPCountdown <= 0)
 					{
@@ -39,11 +39,11 @@ public class IndicatorThread implements Runnable
 							System.out.println("Address changed");
 							MainMenu.self.startNetworkServices();
 						}
-						updateIPCountdown = Config.IP_UPDATE;
+						updateIPCountdown = Reference.IP_UPDATE;
 					}
 					MainMenu.self.indiBA.setWifi(MainMenu.wlanAddress != null);
 					MainMenu.self.indiBA.draw();
-					if (displayState >= MainMenu.IND_FULL)
+					if (displayState >= Reference.IND_FULL)
 					{
 						MainMenu.lcd.clear(1);
 						MainMenu.lcd.clear(2);
@@ -56,8 +56,8 @@ public class IndicatorThread implements Runnable
 					MainMenu.lcd.refresh();
 					// wait until next tick
 					long time = System.currentTimeMillis();
-					this.wait(Config.ANIM_DELAY - (time % Config.ANIM_DELAY));
-					updateIPCountdown -= Config.ANIM_DELAY;
+					this.wait(Reference.ANIM_DELAY - (time % Reference.ANIM_DELAY));
+					updateIPCountdown -= Reference.ANIM_DELAY;
 				}
 				else
 				{
@@ -78,7 +78,7 @@ public class IndicatorThread implements Runnable
 	
 	public void setDisplayState(int state)
 	{
-		if(displayState != MainMenu.IND_SUSPEND)
+		if(displayState != Reference.IND_SUSPEND)
 		{
 			displayState = state;
 			updateNow();
@@ -90,7 +90,7 @@ public class IndicatorThread implements Runnable
 	public void suspend()
 	{
 		savedState = displayState;
-		displayState = MainMenu.IND_SUSPEND;
+		displayState = Reference.IND_SUSPEND;
 		updateNow();			
 	}
 	

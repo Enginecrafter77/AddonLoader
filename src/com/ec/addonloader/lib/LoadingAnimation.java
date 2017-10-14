@@ -1,6 +1,5 @@
-package com.ec.addonloader.util;
+package com.ec.addonloader.lib;
 
-import com.ec.addonloader.lib.MenuUtils;
 
 import lejos.hardware.ev3.LocalEV3;
 import lejos.hardware.lcd.GraphicsLCD;

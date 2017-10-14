@@ -1,6 +1,6 @@
 package com.ec.entries;
 
-import com.ec.addonloader.util.Icons;
+import com.ec.addonloader.lib.Icons;
 import com.ec.main.KeyStorage;
 
 import lejos.ev3.startup.MainMenu;

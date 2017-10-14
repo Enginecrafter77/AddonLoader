@@ -1,10 +1,8 @@
 package com.ec.entries;
 
-import com.ec.addonloader.menu.MenuEntry;
-import com.ec.addonloader.util.Icons;
-import com.ec.main.Main;
+import com.ec.addonloader.lib.Icons;
 
-public class ConnectEntry extends MenuEntry{
+public class ConnectEntry extends APEntry{
 	
 	public ConnectEntry()
 	{
@@ -12,10 +10,9 @@ public class ConnectEntry extends MenuEntry{
 	}
 	
 	@Override
-	public void onEntrySelected()
+	public void onSelected(String ap)
 	{
-		String ssid = Main.apdetail.getExtra();
-		APDetail.apConnect(ssid);
+		APDetail.apConnect(ap);
 	}
 	
 }

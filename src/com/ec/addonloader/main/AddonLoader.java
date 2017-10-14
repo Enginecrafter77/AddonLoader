@@ -15,11 +15,10 @@ import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 
 import com.ec.addonloader.main.LoadingStager.LoadingStage;
-import com.ec.addonloader.menu.MORegistry;
 import lejos.ev3.startup.ExceptionHandler;
 
 /**
- * The main class of AddonLoader. It does the main job of addon loading proccess.
+ * The main class of AddonLoader. It does the main job of addon loading process.
  * On construction, it loads all the jars to it's addons field and then, the menu
  * instructs it to firstly init, then load and finally finish every addon instance.
  * @author Enginecrafter77
@@ -41,7 +40,7 @@ public class AddonLoader {
 	 * Constructs AddonLoader instance with given configuration path. Can be used for debug.
 	 * @param config The path to configuration file.
 	 * @throws FileNotFoundException If addon folder or the config file wouldn't be found.
-	 * @throws IOException If the propertias cannot be loaded or when axes fall from sky.
+	 * @throws IOException If the properties cannot be loaded or when axes fall from sky.
 	 */
 	public AddonLoader(String config) throws FileNotFoundException, IOException
 	{

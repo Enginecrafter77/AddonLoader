@@ -13,7 +13,7 @@ public class PipeReader extends Thread {
 	{
 		try
 		{
-			InputStream is = new FileInputStream(MainMenu.MENU_DIRECTORY + "/menufifo");
+			InputStream is = new FileInputStream(Reference.MENU_DIRECTORY + "/menufifo");
 			while(true)
 			{
 				try

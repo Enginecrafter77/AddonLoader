@@ -4,7 +4,7 @@ import java.io.File;
 
 /**
  * Used to define addon main class. Class must be annotated with <i>Addon</i>
- * @author Michal
+ * @author Enginecrafter77
  */
 public abstract class MenuAddon {
 	
@@ -21,11 +21,11 @@ public abstract class MenuAddon {
 	 */
 	protected File jarfile;
 	
-	/** The first stage of init process.*/
+	/** The first stage of loading process.*/
 	public abstract void init();
-	/** The first stage of init process.*/
+	/** The main stage of loading process.*/
 	public abstract void load();
-	/** The first stage of init process.*/
+	/** The last stage of loading process.*/
 	public abstract void finish();
 	
 	/**

@@ -193,10 +193,4 @@ public class Keyboard
         } while (true);
     }
 
-    public static void main(String[] args)
-    {
-        String s = Keyboard.getString();
-        System.out.println("String is " + s);
-    }
-
 }

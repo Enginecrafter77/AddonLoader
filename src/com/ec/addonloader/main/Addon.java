@@ -4,7 +4,7 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 
 /**
- * Anotation used on classes that describe an addon for menu.
+ * Annotation used on classes that describe an addon for menu.
  * Classes must extends {@link MenuAddon}
  * @author Enginecrafter77
  */

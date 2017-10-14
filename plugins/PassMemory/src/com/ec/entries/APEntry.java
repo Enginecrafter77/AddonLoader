@@ -13,7 +13,7 @@ public abstract class APEntry extends MenuEntry{
 	}
 	
 	@Override
-	public final void onEntrySelected()
+	public final void run()
 	{
 		try
 		{

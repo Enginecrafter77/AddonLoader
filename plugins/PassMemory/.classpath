@@ -3,6 +3,6 @@
 	<classpathentry kind="src" path="src"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
 	<classpathentry kind="con" path="org.lejos.ev3.ldt.LEJOS_EV3_LIBRARY_CONTAINER"/>
-	<classpathentry kind="lib" path="/home/main/Files/Programming/Eclipse/LMPluger/MainMenu.jar"/>
+	<classpathentry kind="lib" path="/home/mich/.local/share/eclipse-workspace/LMPluger/MainMenu.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

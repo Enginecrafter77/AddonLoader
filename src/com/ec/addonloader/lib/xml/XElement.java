@@ -8,7 +8,8 @@ import java.util.Objects;
 
 import com.ec.addonloader.lib.DoubleObject;
 /**
- * This is a class that provides access for simple xml element, its tags and variables.
+ * This is a class that provides access for simple,
+ * modificated xml tree, tags and their variables.
  * @author Enginecrafter77.
  * @version 1.3.4721b
  */
@@ -126,6 +127,11 @@ public class XElement {
     	return this.child.size() > 0;
     }
     
+    public XElement[] getChildren()
+    {
+    	return this.child.toArray(new XElement[0]);
+    }
+    
     /**
      * Gets a element's child by it's ID.
      * @param id
@@ -213,7 +219,7 @@ public class XElement {
     @Override
     public String toString()
     {
-    	return this.name + " (" + (this.parent != null ? this.parent.name : "") + ") Child:" + this.child + " Fields:" + this.fields + " Content: " + this.getContent();
+    	return this.name + (this.parent != null ? "(" + this.parent.name + ")" : "") + this.fields + "{" + this.getContent() + "}";
     }
     
     public static class Field

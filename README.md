@@ -15,6 +15,13 @@ search in menu for addons (a.k.a. plugins) in specific directory. Then, it
 used so-called reflection to load main class from all the jars, and launch
 some method from it.
 
-## Future works [WIP]
-+ Add more configuration options using XML
-+ Add more abstraction to add extensibility
+## Performance
+The menu system tries to optimalize the code to the highest degree
+using the best possible algorithms, while keeping code readability.
+It also tries to minimize disk access and ram access and usage as well.
+I try to always optimize my code, but sometimes, it is somehow hard to invent
+a whole new algorithm, but the result is wonderful.
+
+## Extensibility
+The addonloader is still in development. Currently, you can add your own
+menus, submenus, icons and hooks for few actions.

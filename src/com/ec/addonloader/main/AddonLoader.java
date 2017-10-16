@@ -16,6 +16,7 @@ import java.util.jar.JarFile;
 
 import com.ec.addonloader.main.LoadingStager.LoadingStage;
 import lejos.ev3.startup.ExceptionHandler;
+import lejos.ev3.startup.Reference;
 
 /**
  * The main class of AddonLoader. It does the main job of addon loading process.
@@ -29,7 +30,6 @@ public class AddonLoader {
 	/** Where is the configuration supposed to be. */
 	private String config;
 	public String addonFolder;
-	private boolean doDebug;
 	public static boolean isDisabled;
 	/** Instance of running AddonLoader */
 	public static AddonLoader instance;
@@ -47,7 +47,6 @@ public class AddonLoader {
 		props = new Properties();
 		props.load(new FileReader(config));
 		isDisabled = Boolean.parseBoolean(props.getProperty("addonloader.disabled"));
-		this.doDebug = Boolean.parseBoolean(props.getProperty("addonloader.debug"));
 		this.addonFolder = props.getProperty("addonloader.directory");
 		this.config = config;
 	}
@@ -86,7 +85,6 @@ public class AddonLoader {
 	
 	private void loadJar(File f) throws IOException, ClassNotFoundException, InstantiationException, IllegalAccessException
 	{
-		debug("Searching in " + f.getName());
 		JarFile jar = new JarFile(f);
 		Enumeration<JarEntry> en = jar.entries();
 		
@@ -103,20 +101,21 @@ public class AddonLoader {
 			}
 			
 		    Class<?> cls = cl.loadClass(et.getName().substring(0, et.getName().length() - 6).replace('/', '.'));
-		    debug("Examining class " + cls.getName());
 		    if(MenuAddon.class.isAssignableFrom(cls))
 		    {
-		    	debug("-Class is MenuAddon");
 		    	Annotation[] anr = cls.getAnnotations();
-		    	debug("-Annotations found: " + anr.length);
-			    for(Annotation an : anr)
+		    	for(Annotation an : anr)
 			    {
-			    	debug("--annotation name: " + an.toString());
 			    	if(Addon.class.isAssignableFrom(an.getClass()))
 			    	{
-			    		debug("--Annotation is addon");
+			    		Addon adn = (Addon)an;
+			    		if(adn.apilevel() < Reference.API_REVISION)
+			    		{
+			    			System.err.print("Addon " + adn.name() + " cannot be loaded. Detected old API level " + adn.apilevel());
+			    			continue;
+			    		}
 			    		main = (MenuAddon)cls.newInstance();
-			    		main.addonName = ((Addon)an).name();
+			    		main.addonName = adn.name();
 			    		main.jarfile = f;
 			    		break IterateLoop;
 			    	}
@@ -140,7 +139,7 @@ public class AddonLoader {
 		AddonLoader.instance.loadAddons();
 		MenuRegistry.mainRegistry();
 		MORegistry.init();
-		Thread.setDefaultUncaughtExceptionHandler(instance.doDebug ? new ExceptionHandler.DebugHandler() : new ExceptionHandler());
+		Thread.setDefaultUncaughtExceptionHandler(new ExceptionHandler());
 	}
 	
 	/**
@@ -191,13 +190,4 @@ public class AddonLoader {
 			e.printStackTrace();
 		}
 	}
-	
-	public void debug(String txt)
-	{
-		if(doDebug)
-		{
-			System.out.println(txt);
-		}
-	}
-	
 }

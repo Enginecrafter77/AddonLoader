@@ -10,13 +10,13 @@ public class LoadingAnimation{
 	
 	private int progress;
 	private GraphicsLCD lcd;
-	private int lastProgress;
-	private TheThing t;
+	private int lastPixel;
+	private Immitator t;
 	
 	public LoadingAnimation()
 	{
 		this.progress = 0;
-		this.lastProgress = 9;
+		this.lastPixel = 9;
 		this.lcd = LocalEV3.ev3.getGraphicsLCD();
 	}
 	
@@ -26,7 +26,17 @@ public class LoadingAnimation{
 	 */
 	public void setProgress(int progress)
 	{
-		this.progress = (int)(progress / 0.625);
+		this.progress = progress;
+		this.redrawBar();
+	}
+	
+	/**
+	 * Sets the progress of bar.
+	 * @param progress - Percentual progress.
+	 */
+	public void addProgress(int progress)
+	{
+		this.progress += progress;
 		this.redrawBar();
 	}
 	
@@ -60,7 +70,7 @@ public class LoadingAnimation{
 		lcd.setStrokeStyle(GraphicsLCD.SOLID);
 		lcd.drawRect(7, 100, 163, 19);
 		lcd.drawString(title, 85, 10, GraphicsLCD.TOP | GraphicsLCD.HCENTER);
-		t = new TheThing();
+		t = new Immitator();
 		t.start();
 	}
 	
@@ -78,9 +88,9 @@ public class LoadingAnimation{
 	 */
 	private void redrawBar()
 	{
-		int pg = progress + 9;
-		lcd.fillRect(lastProgress, 102, pg - lastProgress, 16);
-		lastProgress = pg;
+		int pg = (int)(progress / 0.625) + 9; //9 is the starting value, so it shifts the whole row.
+		lcd.fillRect(lastPixel, 102, pg - lastPixel, 16);
+		lastPixel = pg;
 	}
 	
 	/**
@@ -93,19 +103,23 @@ public class LoadingAnimation{
 		lcd.setColor(GraphicsLCD.BLACK);
 	}
 	
-	private class TheThing extends Thread
+	/**
+	 * Class that does only one thing. Traverses characters from
+	 * one end of the line to the other and so on, indicating background activity.
+	 * May seem useless, but it is really useful to detect system freeze.
+	 * @author Enginecrafter77
+	 */
+	private class Immitator extends Thread
 	{	
-		private final int dots_max;
-		private final char filler;
+		private static final int dots_max = 12;
+		private static final char filler = '=';
 		private int dots;
 		private boolean reverse;
 		
-		public TheThing()
+		public Immitator()
 		{
-			this.dots_max = 12;
 			this.dots = -1;
 			this.reverse = false;
-			this.filler = '-';
 		}
 		
 		@Override

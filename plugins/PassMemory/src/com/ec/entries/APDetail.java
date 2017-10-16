@@ -6,8 +6,6 @@ import com.ec.main.KeyStorage;
 import com.ec.main.Main;
 
 import lejos.ev3.startup.ListMenu;
-import lejos.ev3.startup.NetUtils;
-import lejos.ev3.startup.WaitScreen;
 
 public class APDetail extends MenuEntry {
 	
@@ -50,24 +48,6 @@ public class APDetail extends MenuEntry {
 		{
 			e.printStackTrace();
 		}
-	}
-	
-	public static void apConnect(String ssid)
-	{
-		String pwd = KeyStorage.getPass(ssid);
-		if(pwd == null)
-		{
-			EditEntry.setNewPassword(ssid);
-		}
-		WaitScreen.instance.begin("Connect\nto\n" + ssid);
-		WaitScreen.instance.status("Write config");
-		apConnect(ssid, pwd);
-		WaitScreen.instance.end();
-	}
-	
-	public static void apConnect(String ssid, String pwd)
-	{		
-		NetUtils.connect(ssid, pwd);
 	}
 	
 }

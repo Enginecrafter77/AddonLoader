@@ -1,7 +1,10 @@
 package lejos.ev3.startup;
 
+import java.io.File;
 import java.io.IOException;
+import java.io.PrintStream;
 import java.lang.Thread.UncaughtExceptionHandler;
+import java.nio.file.Files;
 
 import lejos.hardware.Button;
 import lejos.hardware.Sound;
@@ -41,11 +44,14 @@ public class ExceptionHandler implements UncaughtExceptionHandler {
 	    }
 	    
 	    // Shutdown the EV3
-    	try {
+    	try
+    	{
+    		PrintStream ps = new PrintStream("/home/lejos/programs/crash.log");
+			Files.copy(new File("/var/volatile/log/menu-err").toPath(), ps);
+			ps.close();
 			Runtime.getRuntime().exec("init 0");
-		} catch (IOException e) {
-			// Ignore
 		}
+    	catch (IOException e){} //Ignore
 	    System.exit(1);
 	}
 	
@@ -64,6 +70,13 @@ public class ExceptionHandler implements UncaughtExceptionHandler {
 			lcd.drawString("ERROR", 1, 2);
 			e.printStackTrace(System.err);
 			Delay.msDelay(500);
+			try
+			{
+				PrintStream ps = new PrintStream("/home/lejos/programs/crash.log");
+				Files.copy(new File("/var/volatile/log/menu-err").toPath(), ps);
+				ps.close();
+			}
+			catch(Exception ex){}
 			System.exit(0);
 		}
 	}

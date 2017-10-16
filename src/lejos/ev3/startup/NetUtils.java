@@ -1,7 +1,5 @@
 package lejos.ev3.startup;
 
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.io.UnsupportedEncodingException;
 import java.security.NoSuchAlgorithmException;
@@ -11,29 +9,70 @@ import javax.crypto.SecretKey;
 import javax.crypto.SecretKeyFactory;
 import javax.crypto.spec.PBEKeySpec;
 
-import com.ec.addonloader.lib.ResourceLocation;
 import com.ec.addonloader.main.MORegistry;
 
+/**
+ * Class written to store various network-related methods.
+ * @author Enginecrafter77
+ */
 public class NetUtils {
 	
-	public static ResourceLocation wpastub;
 	public static final String WIFI_CONFIG="/home/root/lejos/config/wpa_supplicant.conf";
+	private static final char[] hexChars = "0123456789abcdef".toCharArray();
 	
-	protected static void init()
+	/**
+	 * Writes SSID and password converted to PSK to WPA supplicant file.
+	 * @param ssid The name of the network (SSID)
+	 * @param pwd The password of the network, if any
+	 */
+	public static void writeConfig(String ssid, String pwd, boolean hidden)
 	{
-		wpastub = new ResourceLocation("resources/wpa_stub.txt");
+		try
+		{
+			PrintWriter pw = new PrintWriter(WIFI_CONFIG);
+			pw.println("ctrl_interface=/var/run/wpa_supplicant\n");
+			pw.println("network={");
+			pw.println("\tssid=\"" + ssid + '\"');
+			pw.println("\tkey_mgmt=WPA-PSK NONE");
+			if(!pwd.isEmpty())
+			{
+				pw.println("\tpsk=" + NetUtils.computePSK(ssid, pwd));
+			}
+			pw.println("\tscan_ssid=" + (hidden ? '1' : '0'));
+			pw.println("}");
+			pw.close();
+		}
+		catch(Exception e)
+		{
+			System.err.println("Failed to write wpa supplication configuration: " + e);
+		}
 	}
 	
+	/**
+	 * Restarts the network, thus connecting using wpa_supplicant file.
+	 * Simply wrapper for MainMenu.self.startNetwrok(Reference.START_WLAN, true);
+	 */
+	public static void connect()
+	{
+		MainMenu.self.startNetwork(Reference.START_WLAN, true);
+	}
+	
+	/**
+	 * Used internally to connect to wifi.
+	 * @param ap
+	 */
 	protected static void connectAP(String ap)
 	{
 		MORegistry m = MORegistry.getRegistry(MORegistry.Type.WIFI_CONNECT);
 		m.setExtra(ap);
 		if(m.runMethodsB())
 		{
+			boolean hidden = false;
 			if(ap.equals("[HIDDEN]"))
 			{
 				System.out.println("AP is hidden, requesting ESSID");
 				ap = Keyboard.getString();
+				hidden = true;
 			}
 			System.out.println("Access point is " + ap);
 			
@@ -42,76 +81,17 @@ public class NetUtils {
 			{
 			   	System.out.println("Password is " + (pwd.isEmpty() ? "empty" : pwd));
 			   	WaitScreen.instance.begin("Restart\nWiFi\nServices");
-			   	WaitScreen.instance.status("Save configuration");
-			   	connect(ap, pwd);
+			   	WaitScreen.instance.status("Write config");
+			   	writeConfig(ap, pwd, hidden);
+			   	WaitScreen.instance.status("Connecting...");
+			   	connect();
 			   	WaitScreen.instance.end();
 			}
 		}
 		m.runMethodsA();
 	}
 	
-	protected static final char[] hexChars = "0123456789abcdef".toCharArray();
-	
-	public static void connect(String ssid, String pwd)
-	{
-		try
-		{
-			BufferedReader br = new BufferedReader(new InputStreamReader(wpastub.address().openStream()));
-			PrintWriter pw = new PrintWriter(WIFI_CONFIG);
-			StringBuilder buff = new StringBuilder();
-			String line = new String();
-			while((line = br.readLine()) != null)
-			{
-				buff.setLength(0);
-				buff.append(line);
-				addToLine(buff, "ssid=", '"' + ssid + '"');
-				addToLine(buff, "key_mgmt=", pwd.isEmpty() ? "NONE" : "WPA-PSK");
-				if(matchPSK(buff, pwd.isEmpty(), ssid, pwd))
-				{
-					continue;
-				}
-				
-				pw.println(buff.toString());
-			}
-			pw.close();
-			br.close();
-		}
-		catch(Exception e)
-		{
-			System.err.println("Failed to write wpa supplication configuration: " + e);
-		}
-		MainMenu.self.startNetwork(Reference.START_WLAN, true);
-	}
-	
-	private static void addToLine(StringBuilder line, String search, String append)
-	{
-		if(line.indexOf(search) >= 0)
-		{
-			line.append(append);
-		}
-	}
-	
-	private static boolean matchPSK(StringBuilder line, boolean isNoPWD, String ssid, String pwd) throws Exception
-	{
-		if(line.indexOf("psk=") >= 0)
-		{
-			if(isNoPWD)
-			{
-				return true;
-			}
-			else
-			{
-				line.append(computePSK(ssid, pwd));
-				return false;
-			}
-		}
-		else
-		{
-			return false;
-		}
-	}
-	
-	public static String bytesToHex(byte[] buf)
+	private static String bytesToHex(byte[] buf)
 	{
 		int len = buf.length;
 		char[] r = new char[len * 2];
@@ -124,16 +104,25 @@ public class NetUtils {
 		return new String(r);
 	}
 	
-	 private static String computePSK(String ssid, String password) throws UnsupportedEncodingException, NoSuchAlgorithmException, InvalidKeySpecException
-	 {
-		 byte[] ss = ssid.getBytes("utf8");
-		 char[] pass = password.toCharArray();
-	 
-		 SecretKeyFactory f = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA1");
-		 KeySpec ks = new PBEKeySpec(pass, ss, 4096, 256);
-		 SecretKey s = f.generateSecret(ks);
-		 byte[] k = s.getEncoded();
-	 
-		 return bytesToHex(k);
-	 }
+	/**
+	 * Computes PSK from SSID and password. Used when writing configuration to wpa_supplicant.
+	 * @param ssid The network name (SSID)
+	 * @param password Password
+	 * @return Computed PSK ready to be written in the config.
+	 * @throws UnsupportedEncodingException IDK why
+	 * @throws NoSuchAlgorithmException IDK why
+	 * @throws InvalidKeySpecException IDK why
+	 */
+	public static String computePSK(String ssid, String password) throws UnsupportedEncodingException, NoSuchAlgorithmException, InvalidKeySpecException
+	{
+		byte[] ss = ssid.getBytes("utf8");
+		char[] pass = password.toCharArray();
+		
+		SecretKeyFactory f = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA1");
+		KeySpec ks = new PBEKeySpec(pass, ss, 4096, 256);
+		SecretKey s = f.generateSecret(ks);
+		byte[] k = s.getEncoded();
+		
+		return bytesToHex(k);
+	}
 }

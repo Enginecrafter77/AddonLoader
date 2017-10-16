@@ -1,7 +1,5 @@
 package lejos.ev3.startup;
 
-import static com.ec.addonloader.lib.Icons.*;
-
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
@@ -25,6 +23,7 @@ import java.util.jar.JarFile;
 import com.ec.addonloader.lib.LoadingAnimation;
 import com.ec.addonloader.lib.MenuUtils;
 import com.ec.addonloader.lib.DataSize;
+import com.ec.addonloader.lib.PrefixedStream;
 import com.ec.addonloader.main.*;
 import com.ec.addonloader.menu.MappedMenu;
 
@@ -60,9 +59,8 @@ import static lejos.ev3.startup.Reference.*;
 @SuppressWarnings({"restriction"})
 public class MainMenu implements Menu {	
 	
-	public static AddonLoader al;
 	public static List<String> ips = new ArrayList<String>();
-	public static String hostname, panAddress, rmiAddress, wlanAddress;
+	public static String hostname, panAddress, wlanAddress;
 	public static MainMenu self;
 	public static TextLCD lcd;
 	
@@ -88,32 +86,62 @@ public class MainMenu implements Menu {
 	
 	public static void main(String[] args) throws Exception
 	{
-		//DEBUGME Debuggins options
-		System.setOut(new PrintStream("/var/volatile/log/menu-out"));
-		System.setErr(new PrintStream("/var/volatile/log/menu-err"));
+		System.setOut(new PrintStream("/var/volatile/log/menulog"));
+		System.setErr(new PrefixedStream("/var/volatile/log/menulog", "[ERR] "));
 		LoadingAnimation a = new LoadingAnimation();
 		a.start("Starting Menu");
 		a.setState("Booting", 10);
-		waitForEV3BootComplete();
-		LocalEV3.get().getLED().setPattern(1);
-		a.setState("Loading addons", 20);
-		AddonLoader.init();
-		al = AddonLoader.instance;
-		System.out.println("Menu started");
-		hostname = args.length > 0 ? args[0] : "TESTING";
+		File bootLock = new File("/var/run/bootlock");
+		while(bootLock.exists())
+		{
+			Delay.msDelay(500);
+		}
+		LocalEV3.get().getLED().setPattern(1); //Set pattern to green
+		a.setState("Init Menu", 20);
+		AddonLoader.init(); //Initialize addon loader
+		WaitScreen.init();
+		hostname = args.length > 0 ? args[0] : "UNSET";
 		version = args.length > 1 ? args[1] : "UNKNOWN";
-		
+		lcd = LocalEV3.get().getTextLCD();
+		self = new MainMenu();
+		MainMenu.self.waitScreen = WaitScreen.instance;
 		a.setState("Init addons", 35);
-		al.initStage();
+		AddonLoader.instance.initStage();
 		System.out.println("Host name: " + hostname);
 		System.out.println("Version: " + version);
-		System.out.println("Boot complete");
-		self = new MainMenu();
-		lcd = LocalEV3.get().getTextLCD();
+		tryAutorun();
+		a.setState("Load addons", 55);
+		AddonLoader.instance.loadStage();
+		a.setState("Last addon", 60);
+		AddonLoader.instance.finishStage();
+		a.setState("Start Network", 65);
+		MainMenu.self.initialize(a);
+		
+		new TuneThread().start();
+		System.out.println("Initializing menu complete.");
+		LocalEV3.get().getLED().setPattern(0);
+		a.stop();
+		self.mainMenu();
+		self.stopMenu();
+	}
+	
+	/**
+	 * Initializing method
+	 */
+	public void initialize(LoadingAnimation a)
+	{
+		this.updateIPAddresses();
+		a.addProgress(10);
+		bt = Bluetooth.getLocalDevice();
+		a.addProgress(10);
+		this.startNetworkServices();
+		a.addProgress(10);
+		this.startDaemons();
+	}
+	
+	private static void tryAutorun()
+	{
 		File file = getDefaultProgram();
-		WaitScreen.init();
-		MainMenu.self.waitScreen = WaitScreen.instance;
-		a.setProgress(45);
 		if(file != null)
 		{
 			String auto = Settings.getProperty(defaultProgramAutoRunProperty, "");			
@@ -127,52 +155,12 @@ public class MainMenu implements Menu {
 					jar.close();
 					exec(file, JAVA_RUN_CP + file.getPath() + " lejos.internal.ev3.EV3Wrapper " + mainClass, PROGRAMS_DIRECTORY);
 				}
-				catch (IOException e)
+				catch(IOException e)
 				{
 					System.err.println("Exception running autorun program");
 				}
 			}
 		}
-		a.setState("Load addons", 55);
-		al.loadStage();
-		
-		a.setState("Init menu", 65);
-		MainMenu.self.initialize(a);
-		a.setProgress(90);
-		
-		a.setState("Finish up", 95);
-		al.finishStage();
-		
-		new TuneThread().start();
-		System.out.println("Starting the menu");
-		LocalEV3.get().getLED().setPattern(0);
-		a.stop();
-		self.mainMenu();
-		self.stopMenu();
-	}
-
-	private static void waitForEV3BootComplete()
-	{
-		File bootLock = new File("/var/run/bootlock");
-		while(bootLock.exists())
-		{
-			Delay.msDelay(500);
-		}
-	}
-	
-	/**
-	 * Initializing method
-	 */
-	public void initialize(LoadingAnimation a)
-	{
-		System.out.println("Initialisation started...");
-		NetUtils.init();
-		this.updateIPAddresses();
-		bt = Bluetooth.getLocalDevice();
-		a.setState("Start network", 75);
-		this.startNetworkServices();			
-		this.startDaemons();
-		System.out.println("Initialisation complete");
 	}
 	
 	/**
@@ -211,7 +199,7 @@ public class MainMenu implements Menu {
 					filesMenu(PROGRAMS_DIRECTORY, false);
 					break;
 				case 2:
-					samplesMenu();
+					filesMenu(SAMPLES_DIRECTORY, false);
 					break;
 				case 3:
 					filesMenu(TOOLS_DIRECTORY, true);
@@ -994,46 +982,6 @@ public class MainMenu implements Menu {
 	{
 		this.filesMenu(new File(dir), tools);
 	}
-	
-	/**
-	 * Display the samples in the file system.
-	 * Allow the user to choose a file for further operations.
-	 */
-	private void samplesMenu()
-	{
-		//TODO FIX
-		ListMenu menu = new ListMenu();
-		//System.out.println("Finding files ...");
-		int selection = 0;
-		do {
-			File[] files = (new File(SAMPLES_DIRECTORY)).listFiles();
-			int len = 0;
-			for (int i = 0; i < files.length && files[i] != null; i++)
-				len++;
-			if (len == 0)
-			{
-				msg("No samples found");
-				return;
-			}
-			newScreen("Samples");
-			String fileNames[] = new String[len];
-			String[] icons = new String[len];
-			for (int i = 0; i < len; i++){
-				fileNames[i] = files[i].getName();
-				String ext = Utils.getExtension(files[i].getName());
-			   if (ext.equals("jar"))
-					icons[i] = ICMProgram;
-				else if (ext.equals("wav"))
-					icons[i] = ICMSound;
-				else
-					icons[i] = ICMFile;
-			}
-			menu.setItems(fileNames,icons);
-			selection = menu.getSelection(selection);
-			if (selection >= 0)
-				fileMenu(files[selection], false);
-		} while (selection >= 0);
-	}
 
 	
 	/**
@@ -1121,7 +1069,6 @@ public class MainMenu implements Menu {
 	 */
 	public synchronized boolean updateIPAddresses()
 	{
-		//TODO Add hook
 		List<String> result = new ArrayList<String>();
 		Enumeration<NetworkInterface> interfaces;
 		String oldWlan = wlanAddress;
@@ -1132,36 +1079,36 @@ public class MainMenu implements Menu {
 		try
 		{
 			interfaces = NetworkInterface.getNetworkInterfaces();
-		} catch (SocketException e)
+		}
+		catch(SocketException e)
 		{
 			System.err.println("Failed to get network interfaces: " + e);
 			return false;
 		}
-		while (interfaces.hasMoreElements()){
+		while(interfaces.hasMoreElements())
+		{
 			NetworkInterface current = interfaces.nextElement();
 			try
 			{
 				if (!current.isUp() || current.isLoopback() || current.isVirtual()) continue;
-			} catch (SocketException e)
+			}
+			catch (SocketException e)
 			{
 				System.err.println("Failed to get network properties: " + e);
 			}
 			Enumeration<InetAddress> addresses = current.getInetAddresses();
-			while (addresses.hasMoreElements()){
+			while(addresses.hasMoreElements())
+			{
 				InetAddress current_addr = addresses.nextElement();
-				if (current_addr.isLoopbackAddress()) continue;
+				if(current_addr.isLoopbackAddress()) continue;
 				result.add(current_addr.getHostAddress());
-				//System.out.println("Interface name " + current.getName());
-				if (current.getName().equals(WLAN_INTERFACE))
-					wlanAddress = current_addr.getHostAddress();
-				else if (current.getName().equals(PAN_INTERFACE))
-					panAddress = current_addr.getHostAddress();
+				if(current.getName().equals(WLAN_INTERFACE)) wlanAddress = current_addr.getHostAddress();
+				else if(current.getName().equals(PAN_INTERFACE)) panAddress = current_addr.getHostAddress();
 			}
 		}
 		ips = result;
 		// have any of the important addresses changed?
-		return !(oldWlan == wlanAddress || (oldWlan != null && wlanAddress != null && wlanAddress.equals(oldWlan))) ||
-				!(oldPan == panAddress || (oldPan != null && panAddress != null && panAddress.equals(oldPan)));
+		return !(oldWlan == wlanAddress || (oldWlan != null && wlanAddress != null && wlanAddress.equals(oldWlan))) || !(oldPan == panAddress || (oldPan != null && panAddress != null && panAddress.equals(oldPan)));
 	}
 	
 	@Override
@@ -1256,7 +1203,6 @@ public class MainMenu implements Menu {
 	
 	private void wifiMenu()
 	{
-		//TODO HOOK
 		System.out.println("Finding access points ...");
 		LocalWifiDevice wifi = Wifi.getLocalDevice("wlan0");
 		String[] names;

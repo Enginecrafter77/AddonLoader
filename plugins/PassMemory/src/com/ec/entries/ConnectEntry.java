@@ -1,6 +1,7 @@
 package com.ec.entries;
 
 import com.ec.addonloader.lib.Icons;
+import com.ec.main.Routines;
 
 public class ConnectEntry extends APEntry{
 	
@@ -12,7 +13,7 @@ public class ConnectEntry extends APEntry{
 	@Override
 	public void onSelected(String ap)
 	{
-		APDetail.apConnect(ap);
+		Routines.apConnect(ap, false);
 	}
 	
 }

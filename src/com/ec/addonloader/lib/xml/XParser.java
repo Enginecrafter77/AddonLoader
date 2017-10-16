@@ -11,10 +11,11 @@ import java.util.ArrayList;
 import com.ec.addonloader.lib.DoubleObject;
 import com.ec.addonloader.lib.ResourceLocation;
 /**
- * A class that can parse basic xml trees.
+ * A class that can parse custom xml-trees.
  * Note that when it encounters some errors
  * in parsing customly typed xml file, it won't
  * produce exception, but will act strangely.
+ * Speed: 20ms/file.
  * @author Enginecrafter77
  * @version 1.3.4721b
  */

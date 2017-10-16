@@ -10,13 +10,12 @@ import com.ec.addonloader.menu.MethodOverride;
 import com.ec.addonloader.lib.Icons;
 import com.ec.entries.*;
 
-@Addon(name = "PassMemory")
+@Addon(name = "PassMemory", apilevel = 1)
 public class Main extends MenuAddon{
 	
 	public static MappedMenu passwords;
 	public static APDetailMenu apdetail;
 	public static APDetail aps;
-	public static MenuEntry disablewifi;
 	public static MenuEntry ce;
 	public static MenuEntry addnet;
 	public static MenuEntry delete;
@@ -32,7 +31,6 @@ public class Main extends MenuAddon{
 		apdetail = new APDetailMenu();
 		aps = new APDetail();
 		connect = new ConnectOverride();
-		disablewifi = new DisableEntry();
 		ce = new ConnectEntry();
 		delete = new DeleteEntry();
 		edit = new EditEntry();
@@ -46,7 +44,7 @@ public class Main extends MenuAddon{
 		MORegistry.getRegistry(MORegistry.Type.WIFI_CONNECT).add(new ConnectOverride());
 		apdetail.addMenuEntries(ce, delete, edit, info);
 		passwords.addToParent("Passwords", Icons.ICPIN);
-		passwords.addMenuEntries(disablewifi, aps, addnet);
+		passwords.addMenuEntries(aps, addnet);
 	}
 
 	@Override

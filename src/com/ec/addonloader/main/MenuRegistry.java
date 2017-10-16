@@ -83,6 +83,6 @@ public final class MenuRegistry {
 	 */
 	public static MenuAddon[] getAddons()
 	{
-		return MainMenu.al.getAddons();
+		return AddonLoader.instance.getAddons();
 	}
 }

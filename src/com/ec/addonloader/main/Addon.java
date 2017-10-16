@@ -14,4 +14,10 @@ public @interface Addon {
 	 * @return The name of the addon that will be loaded to the MenuAddon instance.
 	 */
 	String name();
+	
+	/**
+	 * The API Revision needed to run this addon.
+	 * @return
+	 */
+	int apilevel();
 }

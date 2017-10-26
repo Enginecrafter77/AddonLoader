@@ -8,8 +8,8 @@ package com.ec.addonloader.lib;
  */
 public class DoubleObject<F, S>{
 	
-	private final F first;
-	private final S second;
+	public final F first;
+	public final S second;
 	
 	/**
 	 * Constructs DoubleObject from 2 objects, obviously.
@@ -20,22 +20,6 @@ public class DoubleObject<F, S>{
 	{
 		this.first = first;
 		this.second = second;
-	}
-	
-	/**
-	 * @return First object of type F.
-	 */
-	public F getFirst()
-	{
-		return first;
-	}
-	
-	/**
-	 * @return Second object of type F.
-	 */
-	public S getSecond()
-	{
-		return second;
 	}
 	
 }

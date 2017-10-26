@@ -6,28 +6,20 @@ import com.ec.addonloader.main.MORegistry;
  * The interface that stores code snippet run by
  * the manager {@link MORegistry}. It extends the Runnable interface,
  * so it can be called by the manager. It also includes two methods,
- * {@link #disableDefaultCode()} and {@link #runBefore()}.
+ * {@link #runAfter()} and {@link #runBefore()}.
  * @author Enginecrafter77
  */
 public interface MethodOverride extends Runnable {
 	/**
-	 * Method used by the manager to tell the menu to
-	 * not run the default code. It can be used to create
-	 * complete override of the method. If the method returns
-	 * true, the code is disabled and won't run. If false,
-	 * the code is run as normally. It will normally have effect
-	 * only if used with runBefore returned true.
-	 * @return true to disable default code.
-	 * @see {@link #runBefore()}
+	 * Method used by the manager to tell the menu to run the method
+	 * before the default code.
+	 * @return Return false to disable execution of the default code. Otherwise, return true. 
 	 */
-	public abstract boolean disableDefaultCode();
+	public abstract boolean runBefore();
 	
 	/**
 	 * Method used by the manager to tell the menu to run the method
-	 * before or after the default code. If the method is run before,
-	 * this method is supposed to return true. If false, the method override
-	 * will be run after the default code.
-	 * @return true if the code is run before the default.
+	 * after the default code. This method has NO effect on the default code, as it is run after it.
 	 */
-	public abstract boolean runBefore();
+	public abstract void runAfter();
 }

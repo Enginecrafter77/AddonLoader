@@ -109,10 +109,10 @@ public class AddonLoader {
 			    	if(Addon.class.isAssignableFrom(an.getClass()))
 			    	{
 			    		Addon adn = (Addon)an;
-			    		if(adn.apilevel() < Reference.API_REVISION)
+			    		if(adn.apilevel() < Reference.API_LEVEL)
 			    		{
-			    			System.err.print("Addon " + adn.name() + " cannot be loaded. Detected old API level " + adn.apilevel());
-			    			continue;
+			    			jar.close();
+			    			throw new InstantiationException(adn.name() + " uses old API level " + adn.apilevel());
 			    		}
 			    		main = (MenuAddon)cls.newInstance();
 			    		main.addonName = adn.name();

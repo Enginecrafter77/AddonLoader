@@ -13,7 +13,7 @@ import com.ec.addonloader.menu.MappedMenu;
 import com.ec.addonloader.menu.MenuEntry;
 import com.ec.addonloader.lib.Icons;
 
-@Addon(name = "ALEssential", apilevel = 1)
+@Addon(name = "ALEssential", apilevel = 2)
 public class Main extends MenuAddon {
 	
 	public static MappedMenu menu;

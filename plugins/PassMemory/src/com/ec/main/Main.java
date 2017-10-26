@@ -10,7 +10,7 @@ import com.ec.addonloader.menu.MethodOverride;
 import com.ec.addonloader.lib.Icons;
 import com.ec.entries.*;
 
-@Addon(name = "PassMemory", apilevel = 1)
+@Addon(name = "PassMemory", apilevel = 2)
 public class Main extends MenuAddon{
 	
 	public static MappedMenu passwords;

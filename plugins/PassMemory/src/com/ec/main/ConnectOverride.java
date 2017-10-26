@@ -35,17 +35,15 @@ public class ConnectOverride implements MethodOverride{
 		}
 		Routines.apConnect(ssid, hidden);
 	}
-
-	@Override
-	public boolean disableDefaultCode()
-	{
-		return true;
-	}
-
+	
 	@Override
 	public boolean runBefore()
 	{
-		return true;
+		this.run();
+		return false;
 	}
+
+	@Override
+	public void runAfter(){}
 
 }

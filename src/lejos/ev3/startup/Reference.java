@@ -1,15 +1,13 @@
 package lejos.ev3.startup;
 
 public class Reference
-{
-    public static final String VERSION = "AF-0.1.9b";
-    
+{    
     /**
      * API Version is version of the base menu library, that defines level of the api.
      * Higher means newer. If addon is built for older version, it won't get loaded.
      * You should NOT reference this as your API version. You might run into compatibility issues.
      */
-    public static final int API_REVISION = 1;
+    public static final int API_LEVEL = 2;
     
 	public static final int ANIM_DELAY = 250;
 	public static final int ACTIVITY_TIMEOUT = 1000;

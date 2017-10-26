@@ -69,13 +69,13 @@ public class XElement {
     protected void parseValues(String s)
     {
         DoubleObject<String, ArrayList<String>> d = XParser.removeSequences(s, '\"');
-        String[] a = d.getFirst().split(" ");
+        String[] a = d.first.split(" ");
         
         for(int i = 0; i < a.length; i++)
         {
-            if(i < d.getSecond().size() && !XParser.isStringEmpty(a[i]))
+            if(i < d.second.size() && !XParser.isStringEmpty(a[i]))
             {
-                fields.add(new Field(a[i].substring(0, a[i].lastIndexOf("=")), d.getSecond().get(i)));
+                fields.add(new Field(a[i].substring(0, a[i].lastIndexOf("=")), d.second.get(i)));
             }
         }
     }

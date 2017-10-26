@@ -78,15 +78,7 @@ public class MORegistry extends ArrayList<MethodOverride> implements ExtraCarrie
 		boolean runDef = true;
 		while(i.hasNext())
 		{
-			MethodOverride m = i.next();
-			if(m.runBefore())
-			{
-				m.run();
-				if(runDef && m.disableDefaultCode())
-				{
-					runDef = false;
-				}
-			}
+			runDef = i.next().runBefore();
 		}
 		return runDef;
 	}
@@ -99,23 +91,7 @@ public class MORegistry extends ArrayList<MethodOverride> implements ExtraCarrie
 		Iterator<MethodOverride> i = this.iterator();
 		while(i.hasNext())
 		{
-			MethodOverride m = i.next();
-			if(!m.runBefore())
-			{
-				m.run();
-			}
-		}
-	}
-	
-	/**
-	 * Runs all methods.
-	 */
-	public void runAllMethods()
-	{
-		Iterator<MethodOverride> i = this.iterator();
-		while(i.hasNext())
-		{
-			i.next().run();
+			i.next().runAfter();
 		}
 	}
 	

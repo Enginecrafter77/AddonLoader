@@ -176,4 +176,26 @@ public class MenuUtils {
 		}
 	}
 	
+	/**
+	 * Prints formatted version number. <br>
+	 * <b>Examples:</b>
+	 * <p>num: 65, places: 2 = 6.5</p>
+	 * <p>num: 73, places: 3 = 0.7.3</p>
+	 * <p>num: 239, places: 2 = 23.9</p>
+	 * @param num The number of the version to display.
+	 * @param places Places of the displayed version, common are 2 and 3.
+	 * @return Formatted version string.
+	 */
+	public static String formatVersion(int num, int places)
+	{
+		int offset = (places - 1) * 2 + 1;
+		StringBuilder str = new StringBuilder();
+		str.append(num);
+		for(int i = 1; i < offset; i += 2)
+		{
+			str.insert(str.length() - i, (str.length() - i < 4) ? "0." : '.');
+		}
+		return str.toString();
+	}
+	
 }

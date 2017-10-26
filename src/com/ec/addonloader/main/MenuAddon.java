@@ -11,7 +11,7 @@ public abstract class MenuAddon {
 	/**
 	 * The name of addon. It is set either by the user
 	 * or automatically by the {@link AddonLoader} from
-	 * the annotation {@link Addon}.
+	 * the annotation {@link Addon} before the {@link #init()}
 	 */
 	protected String addonName;
 	/**
@@ -22,11 +22,11 @@ public abstract class MenuAddon {
 	protected File jarfile;
 	
 	/** The first stage of loading process.*/
-	public abstract void init();
+	protected abstract void init();
 	/** The main stage of loading process.*/
-	public abstract void load();
+	protected abstract void load();
 	/** The last stage of loading process.*/
-	public abstract void finish();
+	protected abstract void finish();
 	
 	/**
 	 * @return Addon name as stated by annotation.

@@ -64,7 +64,7 @@ public class MainMenu implements Menu {
 	public static MainMenu self;
 	public static TextLCD lcd;
 	
-	private static String version = "Unknown";
+	private static String lejosversion, menuversion;
 	private static GraphicMenu curMenu;
 	private static LocalBTDevice bt;
 	private static Process program; // the running user program, if any
@@ -101,14 +101,16 @@ public class MainMenu implements Menu {
 		AddonLoader.init(); //Initialize addon loader
 		WaitScreen.init();
 		hostname = args.length > 0 ? args[0] : "UNSET";
-		version = args.length > 1 ? args[1] : "UNKNOWN";
+		lejosversion = args.length > 1 ? args[1] : "UNKNOWN";
+		menuversion = "AF-" + MenuUtils.formatVersion(Reference.API_LEVEL, 3);
 		lcd = LocalEV3.get().getTextLCD();
 		self = new MainMenu();
 		MainMenu.self.waitScreen = WaitScreen.instance;
 		a.setState("Init addons", 35);
 		AddonLoader.instance.initStage();
 		System.out.println("Host name: " + hostname);
-		System.out.println("Version: " + version);
+		System.out.println("Version: " + lejosversion);
+		System.out.println("Version: " + menuversion);
 		tryAutorun();
 		a.setState("Load addons", 55);
 		AddonLoader.instance.loadStage();
@@ -264,8 +266,8 @@ public class MainMenu implements Menu {
 		while(selection >= 0)
 		{
 			newScreen("Bluetooth");
-			selection = menu.getSelection(selection);
 			LCD.drawString("Visible: " + (bt.getVisibility() ? "ON" : "OFF"), 1, 2);
+			selection = menu.getSelection(selection);
 			switch(selection)
 			{
 				case 0:
@@ -692,9 +694,9 @@ public class MainMenu implements Menu {
 		if(m.runMethodsB())
 		{
 			lcd.drawString("leJOS:", 0, 2);
-			lcd.drawString(version, 6, 2);
+			lcd.drawString(lejosversion, 6, 2);
 			lcd.drawString("Menu:", 0, 3);
-			lcd.drawString(Reference.VERSION, 6, 3);
+			lcd.drawString(menuversion, 6, 3);
 			getButtonPress();
 		}
 		m.runMethodsA();
@@ -1288,12 +1290,12 @@ public class MainMenu implements Menu {
 
 	@Override
 	public String getVersion() {
-		return version;
+		return lejosversion;
 	}
 
 	@Override
 	public String getMenuVersion() {
-		return Reference.VERSION;
+		return menuversion;
 	}
 
 	@Override

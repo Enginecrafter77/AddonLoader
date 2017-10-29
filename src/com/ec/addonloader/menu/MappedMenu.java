@@ -6,7 +6,6 @@ import com.ec.addonloader.lib.ExtraCarrier;
 import com.ec.addonloader.lib.Icons;
 
 import lejos.ev3.startup.GraphicMenu;
-import lejos.ev3.startup.MainMenu;
 import lejos.hardware.lcd.Image;
 
 public class MappedMenu extends GraphicMenu implements ExtraCarrier<String>{
@@ -194,16 +193,6 @@ public class MappedMenu extends GraphicMenu implements ExtraCarrier<String>{
 	public MenuEntry getCustomEntry(int index)
 	{
 		return this.customEntries.get(index - (this.getItems().length - this.customEntries.size()));
-	}
-	
-	public static void newScreen(String title)
-	{
-		MainMenu.self.newScreen(title);
-	}
-	
-	public static void newScreen()
-	{
-		MainMenu.self.newScreen();
 	}
 
 }

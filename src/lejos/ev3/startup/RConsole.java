@@ -16,8 +16,7 @@ public class RConsole extends Thread
 {
     static final int MODE_SWITCH = 0xff;
     static final int MODE_LCD = 0x0;
-    
-    static final int RCONSOLE_PORT = 8001;    
+        
     ServerSocket ss = null;
     Socket conn = null;
     PrintStream origOut = System.out, origErr = System.err;
@@ -42,7 +41,7 @@ public class RConsole extends Thread
     {      
     	// Create a server socket
     	try {
-			ss = new ServerSocket(RCONSOLE_PORT);
+			ss = new ServerSocket(Reference.RCONSOLE_PORT);
 			System.out.println("Server socket created");
 		} catch (IOException e1) {
 			e1.printStackTrace();

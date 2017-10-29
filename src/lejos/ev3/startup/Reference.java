@@ -7,7 +7,7 @@ public class Reference
      * Higher means newer. If addon is built for older version, it won't get loaded.
      * You should NOT reference this as your API version. You might run into compatibility issues.
      */
-    public static final int API_LEVEL = 2;
+    public static final int API_LEVEL = 3;
     
 	public static final int ANIM_DELAY = 250;
 	public static final int ACTIVITY_TIMEOUT = 1000;
@@ -15,6 +15,9 @@ public class Reference
 	public static final int ICON_BATTERY_POS = 0;
 	public static final int ICON_BATTERY_WIDTH = 12;
 	public static final int ICON_BATTERY_BLINK = 4 * Reference.ANIM_DELAY;
+	public static final int RCONSOLE_PORT = 8001;
+	public static final int REMOTE_MENU_PORT = 8002;
+	public static final int BROADCAST_PORT = 3016;
 	
 	public static final String JAVA_RUN_CP = "jrun -cp ";
 	public static final String JAVA_DEBUG_CP = "jrun -Xdebug -Xrunjdwp:transport=dt_socket,server=y,address=8000,suspend=y -cp ";

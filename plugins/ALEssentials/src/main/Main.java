@@ -13,7 +13,7 @@ import com.ec.addonloader.menu.MappedMenu;
 import com.ec.addonloader.menu.MenuEntry;
 import com.ec.addonloader.lib.Icons;
 
-@Addon(name = "ALEssential", apilevel = 2)
+@Addon(name = "ALEssential", apilevel = 3)
 public class Main extends MenuAddon {
 	
 	public static MappedMenu menu;
@@ -26,10 +26,12 @@ public class Main extends MenuAddon {
 	public static MenuEntry delete;
 	public static MenuEntry disable;
 	public static MenuEntry debug;
+	public static UpdateServer upd;
 	
 	@Override
 	public void init()
 	{
+		upd = new UpdateServer();
 		menu = new MappedMenu().setParent(MenuRegistry.system);
 		advboot = new MappedMenu().setParent(MenuRegistry.boot_menu);
 		addons = new AddonList();
@@ -99,5 +101,8 @@ public class Main extends MenuAddon {
 	}
 
 	@Override
-	public void finish(){}
+	public void finish()
+	{
+		upd.start();
+	}
 }

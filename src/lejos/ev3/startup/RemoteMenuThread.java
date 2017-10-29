@@ -40,8 +40,6 @@ import lejos.robotics.navigation.DifferentialPilot;
 @SuppressWarnings("deprecation")
 public class RemoteMenuThread extends Thread {
 	
-	private static final int REMOTE_MENU_PORT = 8002;
-	
 	@Override
 	public void run() {
 		
@@ -51,7 +49,7 @@ public class RemoteMenuThread extends Thread {
 		// Create a server socket
 		try
 		{
-			ss = new ServerSocket(REMOTE_MENU_PORT);
+			ss = new ServerSocket(Reference.REMOTE_MENU_PORT);
 			System.out.println("Remote menu server socket created");
 		}
 		catch(IOException e)

@@ -10,7 +10,7 @@ import com.ec.addonloader.menu.MethodOverride;
 import com.ec.addonloader.lib.Icons;
 import com.ec.entries.*;
 
-@Addon(name = "PassMemory", apilevel = 2)
+@Addon(name = "PassMemory", apilevel = 3)
 public class Main extends MenuAddon{
 	
 	public static MappedMenu passwords;
@@ -41,7 +41,7 @@ public class Main extends MenuAddon{
 	@Override
 	public void load()
 	{
-		MORegistry.getRegistry(MORegistry.Type.WIFI_CONNECT).add(new ConnectOverride());
+		MORegistry.WIFI_CONNECT.addMethod(new ConnectOverride());
 		apdetail.addMenuEntries(ce, delete, edit, info);
 		passwords.addToParent("Passwords", Icons.ICPIN);
 		passwords.addMenuEntries(aps, addnet);

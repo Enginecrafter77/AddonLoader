@@ -23,7 +23,6 @@ import java.util.jar.JarFile;
 import com.ec.addonloader.lib.LoadingAnimation;
 import com.ec.addonloader.lib.MenuUtils;
 import com.ec.addonloader.lib.DataSize;
-import com.ec.addonloader.lib.PrefixedStream;
 import com.ec.addonloader.main.*;
 import com.ec.addonloader.menu.MappedMenu;
 
@@ -87,7 +86,7 @@ public class MainMenu implements Menu {
 	public static void main(String[] args) throws Exception
 	{
 		System.setOut(new PrintStream("/var/volatile/log/menulog"));
-		System.setErr(new PrefixedStream("/var/volatile/log/menulog", "[ERR] "));
+		System.setErr(System.out);
 		LoadingAnimation a = new LoadingAnimation();
 		a.start("Starting Menu");
 		a.setState("Booting", 10);
@@ -689,9 +688,8 @@ public class MainMenu implements Menu {
 	 */
 	private void displayVersion()
 	{
-		MORegistry m = MORegistry.getRegistry(MORegistry.Type.DISPLAY_VERISON);
 		newScreen("Version");
-		if(m.runMethodsB())
+		if(MORegistry.DISPLAY_VERISON.runMethodsB())
 		{
 			lcd.drawString("leJOS:", 0, 2);
 			lcd.drawString(lejosversion, 6, 2);
@@ -699,7 +697,7 @@ public class MainMenu implements Menu {
 			lcd.drawString(menuversion, 6, 3);
 			getButtonPress();
 		}
-		m.runMethodsA();
+		MORegistry.DISPLAY_VERISON.runMethodsA();
 	}
 	
 	/**
@@ -788,17 +786,15 @@ public class MainMenu implements Menu {
 			System.out.println("Running program: " + file.getPath());
 			if(isTool)
 			{
-				MORegistry tr = MORegistry.getRegistry(MORegistry.Type.RUN_TOOL);
-				if(tr.runMethodsB())
+				if(MORegistry.RUN_TOOL.runMethodsB())
 				{
 					execInThisJVM(file);
 				}
-				tr.runMethodsA();
+				MORegistry.RUN_TOOL.runMethodsA();
 			}
 			else
 			{
-				MORegistry tr = MORegistry.getRegistry(MORegistry.Type.RUN_PROG);
-				if(tr.runMethodsB())
+				if(MORegistry.RUN_PROG.runMethodsB())
 				{
 					try
 					{
@@ -812,7 +808,7 @@ public class MainMenu implements Menu {
 						System.err.println("Exception running program");
 					}
 				}
-				tr.runMethodsA();
+				MORegistry.RUN_PROG.runMethodsA();
 			}
 			break;
 		case 1:
@@ -903,9 +899,9 @@ public class MainMenu implements Menu {
 	/**
 	 * Execute a program and display its output to System.out and error stream to System.err
 	 */
-	private static void startProgram(String command, File jar) {
-		MORegistry m = MORegistry.getRegistry(MORegistry.Type.RUN_PROG);
-		if(m.runMethodsB())
+	private static void startProgram(String command, File jar)
+	{
+		if(MORegistry.RUN_PROG.runMethodsB())
 		{
 			try
 			{
@@ -933,7 +929,7 @@ public class MainMenu implements Menu {
 				self.resume();
 			}
 		}
-		m.runMethodsA();
+		MORegistry.RUN_PROG.runMethodsA();
 	}
 	
 	@Override

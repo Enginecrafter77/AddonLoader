@@ -63,9 +63,8 @@ public class NetUtils {
 	 */
 	protected static void connectAP(String ap)
 	{
-		MORegistry m = MORegistry.getRegistry(MORegistry.Type.WIFI_CONNECT);
-		m.setExtra(ap);
-		if(m.runMethodsB())
+		MORegistry.WIFI_CONNECT.setExtra(ap);
+		if(MORegistry.WIFI_CONNECT.runMethodsB())
 		{
 			boolean hidden = false;
 			if(ap.equals("[HIDDEN]"))
@@ -88,7 +87,7 @@ public class NetUtils {
 			   	WaitScreen.instance.end();
 			}
 		}
-		m.runMethodsA();
+		MORegistry.WIFI_CONNECT.runMethodsA();
 	}
 	
 	private static String bytesToHex(byte[] buf)

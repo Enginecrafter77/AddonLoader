@@ -198,4 +198,14 @@ public class MenuUtils {
 		return str.toString();
 	}
 	
+	public static void newScreen(String title)
+	{
+		MainMenu.self.newScreen(title);
+	}
+	
+	public static void newScreen()
+	{
+		MainMenu.self.newScreen();
+	}
+	
 }

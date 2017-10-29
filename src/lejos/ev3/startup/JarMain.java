@@ -20,7 +20,7 @@ public class JarMain extends URLClassLoader {
 	
 	public void run() throws Exception
 	{
-		invokeClass(this.f.getManifest().getMainAttributes().getValue("Main-class"), new String[0]);
+		invokeClass(this.f.getManifest().getMainAttributes().getValue("Main-class"), new String[]{});
 	    this.f.close();
 	}
 	
@@ -38,7 +38,7 @@ public class JarMain extends URLClassLoader {
 	    
 	    try
 	    {
-	        m.invoke(null, (Object[])args);
+	        m.invoke(null, new Object[]{args});
 	    }
 	    catch(IllegalAccessException e){/*This should not happen, as we have disabled access checks*/}
 	}

@@ -8,43 +8,35 @@ import com.ec.addonloader.menu.MethodOverride;
 
 /**
  * The class that provides menu overrides.
- * Menu overrides are basically code snippets that
- * are run when something is being launched, or just after it.
- * It is an dynamic way to hardly modify menu behaviour, but it's
- * a bit RAM costly. Is could be done differently, but with more CPU time
- * wasted on reflection-searching classes in a tradeoff, so this was the better choice.
- * The registry stores interfaces, {@link MethodOverride}, that represent the
- * actual code run after or before method.
+ * Every time user adds {@link MethodOverride}, it is stored here in ArrayList.
+ * It is an dynamic way to modify menu behaviour, but it is
+ * kinda hungry for RAM. Another way was to use more CPU time
+ * reflection-searching classes, but I thought this was the better way.
+ * Anyway, reflection itself takes RAM, too.
  * @author Enginecrafter77
  * @see MethodOverride
  */
-public class MORegistry extends ArrayList<MethodOverride> implements ExtraCarrier<String>{
+public enum MORegistry implements ExtraCarrier<String>{
 	
-	private static final long serialVersionUID = 7261544297467984335L;
-	public static MORegistry[] methods;
+	/** Run when updateing IP address list. */
+	UPDATE_IPS,
+	/** When starting up network interface. */
+	START_NET,
+	/** When user selects program to run */
+	RUN_PROG,
+	/** When user selects tool to run */
+	RUN_TOOL,
+	/** When user clicks wifi network in wifi menu. */
+	WIFI_CONNECT,
+	/** When user clicks on Version entry in main menu. */
+	DISPLAY_VERISON;
+	
+	public final ArrayList<MethodOverride> methods;
 	private String arg;
 	
-	/**
-	 * Called internally to initialise method registers.
-	 * Calling this twice will screw up already set up overrides.
-	 */
-	public static void init()
+	private MORegistry()
 	{
-		methods = new MORegistry[Type.values().length];
-		for(int i = 0; i < methods.length; i++)
-		{
-			methods[i] = new MORegistry();
-		}
-	}
-	
-	/**
-	 * Gets the desired registry based on provided {@link Type}
-	 * @param type Override class, where it belongs.
-	 * @return The matching MORegistry.
-	 */
-	public static MORegistry getRegistry(MORegistry.Type type)
-	{
-		return MORegistry.methods[type.index];
+		methods = new ArrayList<MethodOverride>();
 	}
 	
 	/**
@@ -53,7 +45,7 @@ public class MORegistry extends ArrayList<MethodOverride> implements ExtraCarrie
 	 */
 	public void addMethod(MethodOverride m)
 	{
-		this.add(m);
+		this.methods.add(m);
 	}
 	
 	@Override
@@ -74,7 +66,7 @@ public class MORegistry extends ArrayList<MethodOverride> implements ExtraCarrie
 	 */
 	public boolean runMethodsB()
 	{
-		Iterator<MethodOverride> i = this.iterator();
+		Iterator<MethodOverride> i = this.methods.iterator();
 		boolean runDef = true;
 		while(i.hasNext())
 		{
@@ -88,32 +80,10 @@ public class MORegistry extends ArrayList<MethodOverride> implements ExtraCarrie
 	 */
 	public void runMethodsA()
 	{
-		Iterator<MethodOverride> i = this.iterator();
+		Iterator<MethodOverride> i = this.methods.iterator();
 		while(i.hasNext())
 		{
 			i.next().runAfter();
-		}
-	}
-	
-	/**
-	 * Enumeration of types of {@link MORegistry}.
-	 * MORegistries are added dynamically only
-	 * by adding an entry to this enumeration.
-	 * @author Enginecrafter77
-	 */
-	public static enum Type
-	{
-		UPDATE_IPS(0),
-		START_NET(1),
-		RUN_PROG(2),
-		RUN_TOOL(3),
-		WIFI_CONNECT(4),
-		DISPLAY_VERISON(5);
-		
-		private final int index;
-		private Type(int i)
-		{
-			this.index = i;
 		}
 	}
 }

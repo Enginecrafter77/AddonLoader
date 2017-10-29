@@ -5,7 +5,7 @@ import lejos.ev3.startup.ListMenu;
 import lejos.ev3.startup.NetUtils;
 import lejos.ev3.startup.WaitScreen;
 
-import com.ec.addonloader.menu.MappedMenu;
+import com.ec.addonloader.lib.MenuUtils;
 
 public class Routines {
 	
@@ -27,11 +27,11 @@ public class Routines {
 	public static void setNewPassword(String ssid)
 	{
 		ListMenu l = new ListMenu(new String[]{"WPA/WPA2", "Open"});
-		MappedMenu.newScreen("Encryption");
+		MenuUtils.newScreen("Encryption");
 		String pwd;
 		if(l.getSelection(0) == 0)
 		{
-			MappedMenu.newScreen("Password");
+			MenuUtils.newScreen("Password");
 			pwd = Keyboard.getString();
 		}
 		else

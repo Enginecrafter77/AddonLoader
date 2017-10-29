@@ -2,9 +2,9 @@ package main;
 
 import com.ec.addonloader.main.MenuAddon;
 import com.ec.addonloader.main.MenuRegistry;
-import com.ec.addonloader.menu.MappedMenu;
 import com.ec.addonloader.menu.MenuEntry;
 import com.ec.addonloader.lib.Icons;
+import com.ec.addonloader.lib.MenuUtils;
 
 import lejos.ev3.startup.ListMenu;
 
@@ -29,7 +29,7 @@ public class AddonList extends MenuEntry {
 		int selection = 0;
 		while(selection >= 0)
 		{
-			MappedMenu.newScreen("Addons");
+			MenuUtils.newScreen("Addons");
 			selection = menu.getSelection(selection);
 			if(selection >= 0)
 			{

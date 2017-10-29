@@ -1,9 +1,8 @@
 package com.ec.entries;
 
 import com.ec.addonloader.lib.Icons;
+import com.ec.addonloader.lib.MenuUtils;
 import com.ec.main.KeyStorage;
-
-import lejos.ev3.startup.MainMenu;
 
 public class InfoEntry extends APEntry {
 	
@@ -17,7 +16,7 @@ public class InfoEntry extends APEntry {
 	{
 		try
 		{
-			MainMenu.self.newScreen();
+			MenuUtils.newScreen();
 			KeyStorage.viewInfo(ssid);
 		}
 		catch(Exception e)

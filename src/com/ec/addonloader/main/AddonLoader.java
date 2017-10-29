@@ -100,33 +100,44 @@ public class AddonLoader {
 				continue;
 			}
 			
-		    Class<?> cls = cl.loadClass(et.getName().substring(0, et.getName().length() - 6).replace('/', '.'));
-		    if(MenuAddon.class.isAssignableFrom(cls))
-		    {
-		    	Annotation[] anr = cls.getAnnotations();
-		    	for(Annotation an : anr)
+			String clsname = et.getName().substring(0, et.getName().length() - 6).replace('/', '.');
+			try
+			{
+				Class<?> cls = cl.loadClass(clsname);
+			    if(MenuAddon.class.isAssignableFrom(cls))
 			    {
-			    	if(Addon.class.isAssignableFrom(an.getClass()))
-			    	{
-			    		Addon adn = (Addon)an;
-			    		if(adn.apilevel() < Reference.API_LEVEL)
-			    		{
-			    			jar.close();
-			    			throw new InstantiationException(adn.name() + " uses old API level " + adn.apilevel());
-			    		}
-			    		main = (MenuAddon)cls.newInstance();
-			    		main.addonName = adn.name();
-			    		main.jarfile = f;
-			    		break IterateLoop;
-			    	}
+			    	Annotation[] anr = cls.getAnnotations();
+			    	for(Annotation an : anr)
+				    {
+				    	if(Addon.class.isAssignableFrom(an.getClass()))
+				    	{
+				    		Addon adn = (Addon)an;
+				    		if(adn.apilevel() < Reference.API_LEVEL)
+				    		{
+				    			throw new InstantiationException(adn.name() + " uses too old API level " + adn.apilevel());
+				    		}
+				    		main = (MenuAddon)cls.newInstance();
+				    		main.addonName = adn.name();
+				    		main.jarfile = f;
+				    		break IterateLoop;
+				    	}
+				    }
 			    }
-		    }
+			}
+			catch(NoClassDefFoundError e)
+			{
+				/* This try-catch block allows the addon to handle classes, that contain non-ev3-loadable code, like
+				 * pc windowing for client-side implementation etc.
+				 */
+				System.err.println("[WARNING] " + f.getName() + " contains unloadable class " + clsname);
+			}
 		}
 		if(main == null)
 		{
 			throw new ClassNotFoundException("Cannot find MenuAddon class in file " + f.getName());
 		}
 		addons.add(main);
+		jar.close();
 	}
 	
 	/**
@@ -138,7 +149,6 @@ public class AddonLoader {
 		AddonLoader.instance = new AddonLoader("/home/root/lejos/config/addons.conf");
 		AddonLoader.instance.loadAddons();
 		MenuRegistry.mainRegistry();
-		MORegistry.init();
 		Thread.setDefaultUncaughtExceptionHandler(new ExceptionHandler());
 	}
 	

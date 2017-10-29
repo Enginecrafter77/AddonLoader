@@ -1,6 +1,6 @@
 package com.ec.entries;
 
-import com.ec.addonloader.menu.MappedMenu;
+import com.ec.addonloader.lib.MenuUtils;
 import com.ec.addonloader.menu.MenuEntry;
 import com.ec.main.KeyStorage;
 import com.ec.main.Main;
@@ -28,7 +28,7 @@ public class APDetail extends MenuEntry {
 			int selection = 0;
 			while(selection >= 0)
 			{
-				MappedMenu.newScreen("AP Keys");
+				MenuUtils.newScreen("AP Keys");
 				selection = menu.getSelection(selection);
 				if(selection >= 0)
 				{

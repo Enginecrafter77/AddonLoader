@@ -1,8 +1,7 @@
 package com.ec.entries;
 
+import com.ec.addonloader.lib.MenuUtils;
 import com.ec.addonloader.menu.MappedMenu;
-
-import lejos.ev3.startup.MainMenu;
 
 public class APDetailMenu extends MappedMenu{
 	
@@ -15,7 +14,7 @@ public class APDetailMenu extends MappedMenu{
 		int selection = 0;
 		while(selection >= 0 && cnt)
 		{
-			MainMenu.self.newScreen(ap);
+			MenuUtils.newScreen(ap);
 			selection = this.getSelection(selection);
 			if(selection >= 0)
 			{

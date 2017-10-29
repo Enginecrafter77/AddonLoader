@@ -3,6 +3,6 @@
 	<classpathentry kind="src" path="src"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
 	<classpathentry kind="con" path="org.lejos.ev3.ldt.LEJOS_EV3_LIBRARY_CONTAINER"/>
-	<classpathentry kind="lib" path="D:/EV3_All/Menu_AF/MainMenu.jar"/>
+	<classpathentry kind="lib" path="/MainMenu_AF/MainMenu.jar" sourcepath="/MainMenu_AF"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

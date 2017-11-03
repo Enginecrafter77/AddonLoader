@@ -1,11 +1,11 @@
 package com.ec.main;
 
-import lejos.ev3.startup.Keyboard;
 import lejos.ev3.startup.ListMenu;
 import lejos.ev3.startup.NetUtils;
 import lejos.ev3.startup.WaitScreen;
 
 import com.ec.addonloader.lib.MenuUtils;
+import com.ec.addonloader.util.InputMethod;
 
 public class Routines {
 	
@@ -32,7 +32,7 @@ public class Routines {
 		if(l.getSelection(0) == 0)
 		{
 			MenuUtils.newScreen("Password");
-			pwd = Keyboard.getString();
+			pwd = InputMethod.current.getString();
 		}
 		else
 		{

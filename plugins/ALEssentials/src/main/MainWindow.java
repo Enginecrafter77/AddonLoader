@@ -119,7 +119,7 @@ public class MainWindow {
 	{
 		try
 		{
-			Socket sck = new Socket(ip.getText(), UpdateServer.port);
+			Socket sck = new Socket(ip.getText(), InteractServer.port);
 			u.copyTo(sck.getOutputStream(), file.getSelectedFile().toPath());
 			sck.close();
 		}

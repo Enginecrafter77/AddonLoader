@@ -13,50 +13,27 @@ import com.ec.addonloader.menu.MappedMenu;
 import com.ec.addonloader.menu.MenuEntry;
 import com.ec.addonloader.lib.Icons;
 
-@Addon(name = "ALEssential", apilevel = 3)
+@Addon(name = "ALEssential", apilevel = 4)
 public class Main extends MenuAddon {
-	
-	public static MappedMenu menu;
+
 	public static MappedMenu advboot;
-	public static AddonMenu addonmenu;
 	public static MenuEntry reboot;
 	public static MenuEntry restart;
 	public static MenuEntry exit;
-	public static MenuEntry addons;
-	public static MenuEntry delete;
 	public static MenuEntry disable;
-	public static MenuEntry debug;
-	public static UpdateServer upd;
+	public static InteractServer upd;
 	
 	@Override
 	public void init()
 	{
-		upd = new UpdateServer();
-		menu = new MappedMenu().setParent(MenuRegistry.system);
+		upd = new InteractServer();
 		advboot = new MappedMenu().setParent(MenuRegistry.boot_menu);
-		addons = new AddonList();
-		addonmenu = new AddonMenu();
-		delete = new MenuEntry("Delete", Icons.ICDelete){
+		disable = new MenuEntry("Disable AL", Icons.ICNo){
 			@Override
 			public void run()
 			{
-				Main.addonmenu.subject.getJarFile().delete();
-			}
-		};
-		disable = new MenuEntry("Disable", Icons.ICNo){
-			@Override
-			public void run()
-			{
-				AddonLoader.instance.props.setProperty("addonloader.disabled", String.valueOf(MenuUtils.askConfirm("Disable Addon Loader?", false)));
-				AddonLoader.instance.saveSettings();
-			}
-		};
-		debug = new MenuEntry("Debug", Icons.ICDebug){
-			@Override
-			public void run()
-			{
-				AddonLoader.instance.props.setProperty("addonloader.debug", String.valueOf(MenuUtils.askConfirm("Enable debug?", true)));
-				AddonLoader.instance.saveSettings();
+				AddonLoader.instance.props.setProperty("enabled", String.valueOf(!MenuUtils.askConfirm("Disable Addon Loader?", false)));
+				AddonLoader.instance.props.store("AddonLoader config");
 			}
 		};
 		restart = new MenuEntry("Restart menu", Icons.IC_REFRESH){
@@ -93,11 +70,9 @@ public class Main extends MenuAddon {
 	@Override
 	public void load()
 	{
-		menu.addToParent("Addon Loader", Icons.IC_ADDON);
-		menu.addMenuEntries(addons, disable, debug);
+		MenuRegistry.system.add(disable);
 		advboot.addToParent("Advanced", Icons.ICEV3);
-		advboot.addMenuEntries(reboot, restart, exit);
-		addonmenu.addMenuEntry(delete);
+		advboot.add(reboot, restart, exit);
 	}
 
 	@Override

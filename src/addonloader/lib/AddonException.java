@@ -3,6 +3,10 @@ package addonloader.lib;
 import addonloader.main.LoadingStage;
 import addonloader.main.MenuAddon;
 
+/**
+ * Exception that may be thrown during loading addons.
+ * @author Enginecrafter77
+ */
 public class AddonException extends Exception {
 	private static final long serialVersionUID = 3685105936835969469L;
 

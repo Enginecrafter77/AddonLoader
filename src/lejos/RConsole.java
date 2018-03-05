@@ -11,7 +11,6 @@ import java.net.SocketTimeoutException;
 import lejos.hardware.ev3.LocalEV3;
 import lejos.hardware.lcd.TextLCD;
 
-//TODO If unused, remove Rconsole
 public class RConsole extends Thread
 {
     static final int MODE_SWITCH = 0xff;

@@ -5,7 +5,7 @@ import java.io.InputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
 
-import lejos.ev3.startup.MainMenu;
+import lejos.MainMenu;
 
 public class InteractServer extends Thread {
 	

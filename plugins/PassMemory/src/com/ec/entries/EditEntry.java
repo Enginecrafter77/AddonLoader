@@ -1,13 +1,13 @@
 package com.ec.entries;
 
-import com.ec.addonloader.lib.Icons;
+import addonloader.lib.Icon;
 import com.ec.main.Routines;
 
 public class EditEntry extends APEntry {
 
 	public EditEntry()
 	{
-		super("Edit", Icons.IC_EDIT);
+		super("Edit", Icon.EDIT);
 	}
 	
 	@Override

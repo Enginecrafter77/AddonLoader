@@ -11,9 +11,9 @@ import addonloader.lib.AddonException;
  */
 public enum LoadingStage {
 	
-	INIT,
-	LOAD,
-	FINISH;
+	INIT, //The initializing stage
+	LOAD, //The loading stage
+	FINISH; //After that all completed, clean up.
 	
 	/**
 	 * Processes stage on {@link MenuAddon} array.

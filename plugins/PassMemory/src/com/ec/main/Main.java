@@ -1,17 +1,18 @@
 package com.ec.main;
 
-import com.ec.addonloader.main.Addon;
-import com.ec.addonloader.main.ActionRegistry;
-import com.ec.addonloader.main.MenuAddon;
-import com.ec.addonloader.main.MenuRegistry;
-import com.ec.addonloader.menu.MappedMenu;
-import com.ec.addonloader.menu.MenuEntry;
-import com.ec.addonloader.menu.MethodOverride;
-import com.ec.addonloader.lib.Icons;
 import com.ec.entries.*;
 
-@Addon(name = "PassMemory", apilevel = 4)
-public class Main extends MenuAddon{
+import addonloader.lib.Icon;
+import addonloader.main.ActionRegistry;
+import addonloader.main.Addon;
+import addonloader.main.MenuAddon;
+import addonloader.main.MenuRegistry;
+import addonloader.menu.MappedMenu;
+import addonloader.menu.MenuEntry;
+import addonloader.menu.MethodOverride;
+
+@Addon(name = "PassMemory", apilevel = 53)
+public class Main extends MenuAddon {
 	
 	public static MappedMenu passwords;
 	public static APDetailMenu apdetail;
@@ -43,7 +44,7 @@ public class Main extends MenuAddon{
 	{
 		ActionRegistry.WIFI_CONNECT.addMethod(new ConnectOverride());
 		apdetail.add(ce, delete, edit, info);
-		passwords.addToParent("Passwords", Icons.ICPIN);
+		passwords.addToParent("Passwords", Icon.KEY);
 		passwords.add(aps, addnet);
 	}
 

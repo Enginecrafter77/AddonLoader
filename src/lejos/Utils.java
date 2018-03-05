@@ -17,7 +17,7 @@ public class Utils
 		int len = str.length();
 		byte[] r = new byte[len];
 		for (int i = 0; i < len; i++)
-			r[i] = (byte) str.charAt(i);
+			r[i] = (byte)str.charAt(i);
 		return r;
 	}
 
@@ -70,11 +70,11 @@ public class Utils
 	 */
 	public static String getExtension(String fileName)
 	{
-	    int dot = fileName.lastIndexOf(".");
-	    if (dot < 0)
-	        return "";
+		int dot = fileName.lastIndexOf(".");
+		if (dot < 0)
+			return "";
 	
-	    return fileName.substring(dot + 1, fileName.length());
+		return fileName.substring(dot + 1, fileName.length());
 	}
 
 	/**
@@ -84,11 +84,11 @@ public class Utils
 	 */
 	public static String getBaseName(String fileName)
 	{
-	    int dot = fileName.lastIndexOf(".");
-	    if (dot < 0)
-	        return fileName;
+		int dot = fileName.lastIndexOf(".");
+		if (dot < 0)
+			return fileName;
 	
-	    return fileName.substring(0, dot);
+		return fileName.substring(0, dot);
 	}
 	
 	public static String before(String full, String s)
@@ -109,5 +109,19 @@ public class Utils
 			res[i] = files[i].getName();
 		}
 		return res;
+	}
+	
+	/**
+	 * Remaps number x with in bounds to out bounds.
+	 * @param x
+	 * @param in_min
+	 * @param in_max
+	 * @param out_min
+	 * @param out_max
+	 * @return
+	 */
+	public static int map(int x, int in_min, int in_max, int out_min, int out_max)
+	{
+		return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
 	}
 }

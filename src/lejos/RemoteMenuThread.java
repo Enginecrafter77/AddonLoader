@@ -35,9 +35,7 @@ import lejos.remote.ev3.MenuRequest;
 import lejos.robotics.RegulatedMotor;
 import lejos.robotics.SampleProvider;
 import lejos.robotics.filter.PublishFilter;
-import lejos.robotics.navigation.DifferentialPilot;
 
-@SuppressWarnings("deprecation")
 public class RemoteMenuThread extends Thread {
 	
 	@Override
@@ -46,7 +44,6 @@ public class RemoteMenuThread extends Thread {
 		ServerSocket ss;
 		Socket conn = null;
 		
-		// Create a server socket
 		try
 		{
 			ss = new ServerSocket(Reference.REMOTE_MENU_PORT);
@@ -58,36 +55,38 @@ public class RemoteMenuThread extends Thread {
 			return;
 		}
 		
-		Port[] ports = new Port[] {SensorPort.S1, SensorPort.S2, SensorPort.S3, SensorPort.S4,
-				   MotorPort.A, MotorPort.B, MotorPort.C, MotorPort.D};
+		Port[] ports = new Port[] {SensorPort.S1, SensorPort.S2, SensorPort.S3, SensorPort.S4, MotorPort.A, MotorPort.B, MotorPort.C, MotorPort.D};
 		IOPort[] ioPorts = new IOPort[8];
 		GraphicsLCD g = LocalEV3.get().getGraphicsLCD();
 		SampleProvider[] providers = new SampleProvider[4];
 		BaseSensor[] sensors = new BaseSensor[4];
-		DifferentialPilot pilot = null;
-		int pilotLeftMotor = 0, pilotRightMotor = 0;
-
 		RegulatedMotor[] motors = new RegulatedMotor[4];
 		
-		while(true) {   		
-			try {
+		while(true)
+		{
+			try
+			{
 				System.out.println("Waiting for a remote menu connection");
 				conn = ss.accept();
-				//conn.setSoTimeout(2000);
+				conn.setSoTimeout(2000);
 				conn.setTcpNoDelay(true);
 				ObjectOutputStream os = new ObjectOutputStream(conn.getOutputStream());
 				ObjectInputStream is = new ObjectInputStream(conn.getInputStream());
 				
-				try {
-					while(true) { 
+				try
+				{
+					while(true)
+					{ 
 						os.reset();
 						Object obj = is.readObject();
 						
-						if (obj instanceof MenuRequest) {
+						if(obj instanceof MenuRequest)
+						{
 							MenuRequest request = (MenuRequest) obj;
 							MenuReply reply = new MenuReply();
 							
-							switch (request.request) {
+							switch (request.request)
+							{
 							case RUN_PROGRAM:
 								MainMenu.self.runProgram(request.name);
 								break;
@@ -158,16 +157,21 @@ public class RemoteMenuThread extends Thread {
 								break;
 							case SUSPEND:
 								MainMenu.self.suspend();
+								System.out.println("Menu suspended");
 								break;
 							case RESUME:
 								MainMenu.self.resume();
+								System.out.println("Menu resumed");
 							}
-						} else if (obj instanceof EV3Request) {
+						}
+						else if(obj instanceof EV3Request)
+						{
 							EV3Request request = (EV3Request) obj;
 							EV3Reply reply = new EV3Reply();
-							//System.out.println("Request: " + request.request);
-							try {			 		
-								switch (request.request){
+							try
+							{			 		
+								switch(request.request)
+								{
 								case GET_VOLTAGE_MILLIVOLTS:
 									reply.reply = Battery.getVoltageMilliVolt();
 									os.writeObject(reply);
@@ -468,7 +472,8 @@ public class RemoteMenuThread extends Thread {
 									System.out.println("Creating motor on port " + request.str);
 									Port p = LocalEV3.get().getPort(request.str); // port name
 									RegulatedMotor motor = null;
-									switch (request.ch) {
+									switch(request.ch)
+									{
 									case 'N':
 										motor = new NXTRegulatedMotor(p);
 										break;
@@ -605,117 +610,15 @@ public class RemoteMenuThread extends Thread {
 									if (sensors[request.intValue] == null) throw new PortException("Port not open");
 									sensors[request.intValue].close();
 									break;
-								case CREATE_PILOT:
-									pilotLeftMotor = request.str.charAt(0) - 'A';
-									pilotRightMotor = request.str2.charAt(0) - 'A';
-									pilot = new DifferentialPilot(request.doubleValue, request.doubleValue2, motors[pilotLeftMotor], motors[pilotRightMotor], false);
-									os.writeObject(reply);
-									break;
-								case CLOSE_PILOT:
-									if (motors[pilotLeftMotor] != null) motors[pilotLeftMotor].close();
-									if (motors[pilotRightMotor] != null) motors[pilotRightMotor].close();
-									os.writeObject(reply);
-									break;
-								case PILOT_GET_MIN_RADIUS:
-									reply.doubleReply = pilot.getMinRadius();
-									os.writeObject(reply);
-									break;
-								case PILOT_SET_MIN_RADIUS:
-									pilot.setMinRadius(request.doubleValue);
-									break;
-								case PILOT_ARC_FORWARD:
-									pilot.arcForward(request.doubleValue);
-									break;
-								case PILOT_ARC_BACKWARD:
-									pilot.arcBackward(request.doubleValue);
-									break;
-								case PILOT_ARC:
-									pilot.arc(request.doubleValue, request.doubleValue2);
-									os.writeObject(reply);
-									break;
-								case PILOT_ARC_IMMEDIATE:
-									pilot.arc(request.doubleValue, request.doubleValue2, request.flag);
-									if (!request.flag) os.writeObject(reply);
-									break;
-								case PILOT_TRAVEL_ARC:
-									pilot.travelArc(request.doubleValue, request.doubleValue2);
-									os.writeObject(reply);
-									break;
-								case PILOT_TRAVEL_ARC_IMMEDIATE:
-									pilot.travelArc(request.doubleValue, request.doubleValue2, request.flag);
-									if (!request.flag) os.writeObject(reply);
-									break;
-								case PILOT_FORWARD:
-									pilot.forward();
-									break;
-								case PILOT_BACKWARD:
-									pilot.backward();
-									break;
-								case PILOT_STOP:
-									pilot.stop();
-									break;
-								case PILOT_IS_MOVING:
-									reply.result = pilot.isMoving();
-									os.writeObject(reply);
-									break;
-								case PILOT_TRAVEL:
-									pilot.travel(request.doubleValue);
-									os.writeObject(reply);
-									break;
-								case PILOT_TRAVEL_IMMEDIATE:
-									pilot.travel(request.doubleValue, request.flag);
-									if (!request.flag) os.writeObject(reply);
-									break;
-								case PILOT_SET_LINEAR_SPEED:
-									pilot.setLinearSpeed(request.doubleValue);
-									break;
-								case PILOT_GET_LINEAR_SPEED:
-									reply.doubleReply = pilot.getLinearSpeed();
-									os.writeObject(reply);
-									break;
-					  case PILOT_SET_LINEAR_ACCELERATION:
-						pilot.setLinearAcceleration(request.doubleValue);
-						break;
-					  case PILOT_GET_LINEAR_ACCELERATION:
-						reply.doubleReply = pilot.getLinearAcceleration();
-						os.writeObject(reply);
-						break;
-								case PILOT_GET_MAX_LINEAR_SPEED:
-									reply.doubleReply = pilot.getLinearSpeed();
-									os.writeObject(reply);
-									break;
-								case PILOT_GET_MOVEMENT:
-									break;
-								case PILOT_ROTATE:
-									pilot.rotate(request.doubleValue);									
-									os.writeObject(reply);
-									break;
-								case PILOT_ROTATE_IMMEDIATE:
-									if (request.doubleValue == Double.POSITIVE_INFINITY) pilot.rotateRight();
-									else if (request.doubleValue == Double.NEGATIVE_INFINITY) pilot.rotateLeft();
-									else pilot.rotate(request.doubleValue, request.flag);
-									if (!request.flag) os.writeObject(reply);
-									break;
-								case PILOT_GET_ANGULAR_SPEED:
-									reply.doubleReply = pilot.getAngularSpeed();
-									os.writeObject(reply);
-									break;
-								case PILOT_SET_ANGULAR_SPEED:
-									pilot.setAngularSpeed(request.doubleValue);
-									break;
-								case PILOT_GET_MAX_ANGULAR_SPEED:
-									reply.doubleReply = pilot.getMaxAngularSpeed();
-									os.writeObject(reply);
-									break;
-								case PILOT_STEER:
-									pilot.steer(request.doubleValue);
-									break;
 								default:
 									break;
 								}
-							} catch (Exception e) {
+							}
+							catch (Exception e)
+							{
 								e.printStackTrace();
-								if (request.replyRequired) {
+								if(request.replyRequired)
+								{
 									reply.e = e;
 									os.writeObject(reply);
 								}
@@ -724,11 +627,15 @@ public class RemoteMenuThread extends Thread {
 					}
 				
 				}
-				catch(SocketException e) {
+				catch(SocketException e)
+				{
 					System.out.println("Error reading from remote request socket: " + e);
-					try {
+					try
+					{
 						conn.close();
-					} catch (IOException e1) {
+					}
+					catch (IOException e1)
+					{
 						System.err.println("Error closing connection: " + e);
 					}
 				}

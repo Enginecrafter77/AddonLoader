@@ -56,8 +56,8 @@ public class IndicatorThread implements Runnable
 					MainMenu.lcd.refresh();
 					// wait until next tick
 					long time = System.currentTimeMillis();
-					this.wait(Reference.ANIM_DELAY - (time % Reference.ANIM_DELAY));
-					updateIPCountdown -= Reference.ANIM_DELAY;
+					this.wait(Reference.ANIMATION_DELAY - (time % Reference.ANIMATION_DELAY));
+					updateIPCountdown -= Reference.ANIMATION_DELAY;
 				}
 				else
 				{
@@ -83,8 +83,7 @@ public class IndicatorThread implements Runnable
 			displayState = state;
 			updateNow();
 		}
-		else
-			savedState = state;
+		else savedState = state;
 	}
 	
 	public void suspend()

@@ -1,7 +1,7 @@
 package com.ec.entries;
 
-import com.ec.addonloader.lib.MenuUtils;
-import com.ec.addonloader.menu.MappedMenu;
+import addonloader.util.MenuUtils;
+import addonloader.menu.MappedMenu;
 
 public class APDetailMenu extends MappedMenu{
 	

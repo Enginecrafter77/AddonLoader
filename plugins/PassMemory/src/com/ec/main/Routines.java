@@ -1,11 +1,10 @@
 package com.ec.main;
 
-import lejos.ev3.startup.ListMenu;
-import lejos.ev3.startup.NetUtils;
-import lejos.ev3.startup.WaitScreen;
-
-import com.ec.addonloader.lib.MenuUtils;
-import com.ec.addonloader.util.InputMethod;
+import addonloader.util.InputMethod;
+import addonloader.util.MenuUtils;
+import lejos.ListMenu;
+import lejos.NetUtils;
+import lejos.WaitScreen;
 
 public class Routines {
 	

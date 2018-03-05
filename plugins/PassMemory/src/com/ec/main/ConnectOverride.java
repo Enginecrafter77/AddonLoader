@@ -1,10 +1,9 @@
 package com.ec.main;
 
-import lejos.ev3.startup.ListMenu;
-
-import com.ec.addonloader.lib.MenuUtils;
-import com.ec.addonloader.main.ActionRegistry;
-import com.ec.addonloader.menu.MethodOverride;
+import addonloader.main.ActionRegistry;
+import addonloader.menu.MethodOverride;
+import addonloader.util.MenuUtils;
+import lejos.ListMenu;
 
 public class ConnectOverride implements MethodOverride{
 

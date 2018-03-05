@@ -1,8 +1,6 @@
 package lejos;
 
-import static addonloader.lib.Icons.IMG_HOURGLASS;
-import static addonloader.lib.Icons.stringToBytes8;
-
+import addonloader.lib.Icon;
 import lejos.hardware.ev3.LocalEV3;
 import lejos.hardware.lcd.Font;
 import lejos.hardware.lcd.GraphicsLCD;
@@ -12,7 +10,7 @@ import lejos.hardware.lcd.LCD;
 public class WaitScreen
 {
 	public static WaitScreen instance;
-	public static final Image hourglass = new Image(64, 64, stringToBytes8(IMG_HOURGLASS));
+	public static final Image hourglass = Icon.GEAR.loadIcon();
 	final GraphicsLCD g = LocalEV3.get().getGraphicsLCD();
 	final int scrWidth;
 	final int scrHeight;

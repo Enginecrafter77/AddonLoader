@@ -1,11 +1,12 @@
 package com.ec.entries;
 
-import com.ec.addonloader.lib.MenuUtils;
-import com.ec.addonloader.menu.MenuEntry;
 import com.ec.main.KeyStorage;
 import com.ec.main.Main;
 
-import lejos.ev3.startup.ListMenu;
+import addonloader.lib.Icon;
+import addonloader.menu.MenuEntry;
+import addonloader.util.MenuUtils;
+import lejos.ListMenu;
 
 public class APDetail extends MenuEntry {
 	
@@ -13,7 +14,7 @@ public class APDetail extends MenuEntry {
 	
 	public APDetail()
 	{
-		super("Manage Keys", com.ec.addonloader.lib.Icons.IC_LIST);
+		super("Manage Keys", Icon.LIST);
 		this.updateList = false;
 	}
 	

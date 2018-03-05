@@ -1,14 +1,14 @@
 package com.ec.entries;
 
-import com.ec.addonloader.lib.Icons;
-import com.ec.addonloader.lib.MenuUtils;
+import addonloader.lib.Icon;
+import addonloader.util.MenuUtils;
 import com.ec.main.KeyStorage;
 
 public class InfoEntry extends APEntry {
 	
 	public InfoEntry()
 	{
-		super("Info", Icons.ICInfo);
+		super("Info", Icon.INFO);
 	}
 	
 	@Override

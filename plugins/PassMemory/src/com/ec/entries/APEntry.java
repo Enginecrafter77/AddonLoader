@@ -2,12 +2,13 @@ package com.ec.entries;
 
 import java.io.IOException;
 
-import com.ec.addonloader.menu.MenuEntry;
+import addonloader.lib.Icon;
+import addonloader.menu.MenuEntry;
 import com.ec.main.Main;
 
 public abstract class APEntry extends MenuEntry{
 	
-	public APEntry(String name, String icon)
+	public APEntry(String name, Icon icon)
 	{
 		super(name, icon);
 	}

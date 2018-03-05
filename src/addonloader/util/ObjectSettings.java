@@ -7,6 +7,11 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.util.Properties;
 
+/**
+ * Simple wrapper around {@link Properites},
+ * allowing to easily access objects.
+ * @author Enginecrafter77
+ */
 public class ObjectSettings extends Properties{
 	
 	private static final long serialVersionUID = -8939834947658913650L;

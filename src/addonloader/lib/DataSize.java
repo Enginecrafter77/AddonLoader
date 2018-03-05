@@ -1,5 +1,9 @@
 package addonloader.lib;
 
+/**
+ * Classic binary prefix data size formatter
+ * @author Enginecrafter77
+ */
 public enum DataSize
 {
 	BYTE("B", 1),

@@ -2,18 +2,17 @@ package main;
 
 import java.io.IOException;
 
-import lejos.ev3.startup.MainMenu;
+import addonloader.lib.Icon;
+import addonloader.main.Addon;
+import addonloader.main.AddonLoader;
+import addonloader.main.MenuAddon;
+import addonloader.main.MenuRegistry;
+import addonloader.menu.MappedMenu;
+import addonloader.menu.MenuEntry;
+import addonloader.util.MenuUtils;
+import lejos.MainMenu;
 
-import com.ec.addonloader.lib.MenuUtils;
-import com.ec.addonloader.main.Addon;
-import com.ec.addonloader.main.AddonLoader;
-import com.ec.addonloader.main.MenuAddon;
-import com.ec.addonloader.main.MenuRegistry;
-import com.ec.addonloader.menu.MappedMenu;
-import com.ec.addonloader.menu.MenuEntry;
-import com.ec.addonloader.lib.Icons;
-
-@Addon(name = "ALEssential", apilevel = 4)
+@Addon(name = "ALEssential", apilevel = 53)
 public class Main extends MenuAddon {
 
 	public static MappedMenu advboot;
@@ -28,7 +27,7 @@ public class Main extends MenuAddon {
 	{
 		upd = new InteractServer();
 		advboot = new MappedMenu().setParent(MenuRegistry.boot_menu);
-		disable = new MenuEntry("Disable AL", Icons.ICNo){
+		disable = new MenuEntry("Disable AL", Icon.NO){
 			@Override
 			public void run()
 			{
@@ -36,21 +35,21 @@ public class Main extends MenuAddon {
 				AddonLoader.instance.props.store("AddonLoader config");
 			}
 		};
-		restart = new MenuEntry("Restart menu", Icons.IC_REFRESH){
+		restart = new MenuEntry("Restart menu", Icon.REFRESH){
 			@Override
 			public void run()
 			{
 				MainMenu.self.restart();
 			}
 		};
-		exit = new MenuEntry("Exit menu", Icons.ICNo){
+		exit = new MenuEntry("Exit menu", Icon.NO){
 			@Override
 			public void run()
 			{
 				MainMenu.self.setMenuExit(true);
 			}
 		};
-		reboot = new MenuEntry("Reboot", Icons.IC_REBOOT){
+		reboot = new MenuEntry("Reboot", Icon.REBOOT){
 			@Override
 			public void run()
 			{
@@ -71,7 +70,7 @@ public class Main extends MenuAddon {
 	public void load()
 	{
 		MenuRegistry.system.add(disable);
-		advboot.addToParent("Advanced", Icons.ICEV3);
+		advboot.addToParent("Advanced", Icon.EV3BRICK);
 		advboot.add(reboot, restart, exit);
 	}
 

@@ -1,13 +1,13 @@
 package com.ec.entries;
 
-import com.ec.addonloader.lib.Icons;
+import addonloader.lib.Icon;
 import com.ec.main.Routines;
 
 public class ConnectEntry extends APEntry{
 	
 	public ConnectEntry()
 	{
-		super("Connect", Icons.ICWifi);
+		super("Connect", Icon.WIFI);
 	}
 	
 	@Override

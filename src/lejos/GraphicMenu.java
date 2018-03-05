@@ -22,7 +22,7 @@ import lejos.utility.TextMenu;
  * @author Abram Early
  * 
  * Modified by Lawrie griffiths for the EV3
- *
+ * Further modified by Enginecrafter77 for the AddonLoader.
  */
 public class GraphicMenu extends TextMenu {
 	private static final byte X_AREA = 0; // x of Menu Area
@@ -34,21 +34,14 @@ public class GraphicMenu extends TextMenu {
 	private static final int INTERVAL = 16; // Time between animation frames in milliseconds (1000ms per 1s)
 	private static final int TICKCOUNT = 10; // Number of animation frames used
 	
-	/*
-	 * Line where the menu item label is displayed.
-	 */
-	protected int labelLine = 4;
-	/*
-	 * The y coordinates where the 
-	 */
-	private int yArea;
+	protected int label_line = 4;
+	protected int title_line;
+	private int menu_line;
 	
 	/*
 	 * Icon Database
 	 */
-	protected byte[][] _icons;
-	protected Image[] _iconImages;
-	protected int _titleLine;
+	protected Image[] icons;
 	
 	protected GraphicsLCD g = LocalEV3.get().getGraphicsLCD();
 	protected TextLCD lcd = LocalEV3.get().getTextLCD();
@@ -56,9 +49,9 @@ public class GraphicMenu extends TextMenu {
 	/**
 	 * This constructor sets the location of the menu to the parameter line
 	 */
-	public GraphicMenu( String[] items,String[] icons,int line)
+	public GraphicMenu(String[] items, Image[] icons, int line)
 	{
-		this(items,icons,line, null,1);
+		this(items, icons, line, null, 1);
 	}
 	
 	/**
@@ -67,34 +60,23 @@ public class GraphicMenu extends TextMenu {
 	 * @param items  -  string array containing the menu items. No items beyond the first null will be displayed.
 	 * @param icons  -  string array containing the icon data in the form of a string instead of a byte[].
 	 */	
-	public GraphicMenu(String[] items,String[] icons,int line, String title, int titleLine)
+	public GraphicMenu(String[] items, Image[] icons, int line, String title, int titleLine)
 	{
 		super(items,line,title);
-		this._titleLine = titleLine;
+		this.title_line = titleLine;
 		this.setItems(items,icons);
-		labelLine = line;
-		yArea = (line+1)*16;
+		label_line = line;
+		menu_line = (line+1)*16;
 	}
 	
 	/**
 	 * set the array of items to be displayed
 	 * @param items
 	 */
-	public void setItems(String[] items,String[] icons)
+	public void setItems(String[] items, Image[] newicons)
 	{
 		super.setItems(items);
-		if (icons == null){
-			_icons = null;
-			return;
-		}
-		_icons = new byte[icons.length][];
-	    _iconImages = new Image[icons.length];
-		for(int i = 0; i < icons.length;i++){
-			if (icons[i] != null) {
-				_icons[i] = Utils.stringToBytes8(icons[i]);
-				_iconImages[i] = new Image(32,32,_icons[i]);
-			}
-		}
+		icons = newicons;
 	}
 	
 	@Override
@@ -227,7 +209,7 @@ public class GraphicMenu extends TextMenu {
 	protected void display(int selectedIndex, int animateDirection, int tick)
 	{
 		if(_title != null)
-			lcd.drawString(_title, 0, _titleLine);
+			lcd.drawString(_title, 0, title_line);
 		clearArea();
 		//Prepare Index Locations
 		int length = _length;
@@ -239,31 +221,31 @@ public class GraphicMenu extends TextMenu {
         }
 
 		if (length > 4)
-			drawIconAtTick(_iconImages[((index[0]<0)?length+index[0]:index[0])],0,0+animateDirection,tick);
+			drawIconAtTick(icons[((index[0]<0)?length+index[0]:index[0])],0,0+animateDirection,tick);
 
 		if (length > 1 && !(length == 2 && index[1] == (length-1)))
-			drawIconAtTick(_iconImages[((index[1]<0)?length+index[1]:index[1])],1,1+animateDirection,tick);
+			drawIconAtTick(icons[((index[1]<0)?length+index[1]:index[1])],1,1+animateDirection,tick);
 
 		//Middle Icon
-		drawIconAtTick(_iconImages[index[2]],2,2+animateDirection,tick);
+		drawIconAtTick(icons[index[2]],2,2+animateDirection,tick);
 
 		if (length > 1 && !(length == 2 && index[3] == 0))
-			drawIconAtTick(_iconImages[((index[3]>=length)?index[3]-length:index[3])],3,3+animateDirection,tick);
+			drawIconAtTick(icons[((index[3]>=length)?index[3]-length:index[3])],3,3+animateDirection,tick);
 
 		if (length > 3)
-			drawIconAtTick(_iconImages[((index[4]>=length)?index[4]-length:index[4])],4,4+animateDirection,tick);
+			drawIconAtTick(icons[((index[4]>=length)?index[4]-length:index[4])],4,4+animateDirection,tick);
 		// Draw Label
-		lcd.clear(labelLine);
+		lcd.clear(label_line);
 		if (_items[index[2]].length()>16)
-			lcd.drawString(_items[index[2]],0, labelLine);
+			lcd.drawString(_items[index[2]],0, label_line);
 		else
-			lcd.drawString(_items[index[2]], 8-(_items[index[2]].length()/2), labelLine);
+			lcd.drawString(_items[index[2]], 8-(_items[index[2]].length()/2), label_line);
 		
 		lcd.refresh();
 	}
 	
 	public void clearArea() {
-		lcd.bitBlt(null, 178, 64, 0, 0, 0, yArea, 178, 64, CommonLCD.ROP_CLEAR);
+		lcd.bitBlt(null, 178, 64, 0, 0, 0, menu_line, 178, 64, CommonLCD.ROP_CLEAR);
 	}
 	
 	/**
@@ -275,10 +257,10 @@ public class GraphicMenu extends TextMenu {
 	protected void drawIconAtTick(Image iconImage,int sID, int eID,int tick){
 		// Determine sID Coordinates
 		int fx = X_AREA + X_OFFSET+sID*X_WIDTH;
-		int fy = yArea + Y_OFFSET+(Math.abs(sID-2)*Y_WIDTH);
+		int fy = menu_line + Y_OFFSET+(Math.abs(sID-2)*Y_WIDTH);
 		// Determine eID Coordinates
 		int sx = X_AREA + X_OFFSET+eID*X_WIDTH;
-		int sy = yArea + Y_OFFSET+(Math.abs(eID-2)*Y_WIDTH);
+		int sy = menu_line + Y_OFFSET+(Math.abs(eID-2)*Y_WIDTH);
 		// Determine Icon Offset from sID
 		int ix = (int) (((sx-fx)/10.0)*tick);
 		int iy = (int) (((sy-fy)/10.0)*tick);

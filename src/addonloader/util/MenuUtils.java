@@ -1,18 +1,17 @@
 package addonloader.util;
 
-import static addonloader.lib.Icons.ICNo;
-import static addonloader.lib.Icons.ICYes;
-
 import java.io.File;
 
 import addonloader.lib.DataSize;
+import addonloader.lib.Icon;
 import lejos.GraphicMenu;
 import lejos.MainMenu;
 import lejos.Utils;
 import lejos.hardware.Button;
+import lejos.hardware.lcd.Image;
 
 /**
- * Class used to store random functions used wherever in the code to keep the code clean.
+ * Class used to store random static functions used wherever in the code to keep the code clean.
  * @author Enginecrafter77
  */
 public class MenuUtils {
@@ -97,7 +96,7 @@ public class MenuUtils {
 	 */
 	public static boolean askConfirm(String prompt, boolean def)
 	{
-		GraphicMenu menu = new GraphicMenu(new String[]{"No", "Yes"},new String[]{ICNo,ICYes}, 4, prompt, 3);
+		GraphicMenu menu = new GraphicMenu(new String[]{"No", "Yes"}, new Image[]{Icon.YES.loadIcon(), Icon.NO.loadIcon()}, 4, prompt, 3);
 		return menu.getSelection(def ? 1 : 0) == 1;
 	}
 	
@@ -189,12 +188,17 @@ public class MenuUtils {
 	 */
 	public static String formatVersion(int num, int places)
 	{
-		int offset = (places - 1) * 2 + 1;
 		StringBuilder str = new StringBuilder();
-		str.append(num);
-		for(int i = 1; i < offset; i += 2)
+		str.append(String.valueOf(num));
+		while(str.length() < places) str.insert(0, '0'); //Pad with zeroes if the length is insufficient
+		for(int i = str.length() - 1; i >= 0; i--) //Insert the point marks
 		{
-			str.insert(str.length() - i, (str.length() - i < 4) ? "0." : '.');
+			//If there are remaining places, and if we are not on the beginning of line
+			if(places > 1 && i > 0)
+			{
+				str.insert(i, '.');
+				places--;
+			}
 		}
 		return str.toString();
 	}

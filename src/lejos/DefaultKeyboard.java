@@ -1,7 +1,7 @@
 package lejos;
 
+import addonloader.lib.Icon;
 import addonloader.util.InputMethod;
-import lejos.Utils;
 import lejos.hardware.Button;
 import lejos.hardware.ev3.LocalEV3;
 import lejos.hardware.lcd.Font;
@@ -9,28 +9,7 @@ import lejos.hardware.lcd.GraphicsLCD;
 import lejos.hardware.lcd.Image;
 
 public class DefaultKeyboard extends InputMethod
-{
-	private static Image ICOK = new Image(
-			12,
-			16,
-			Utils.stringToBytes8("\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u000c\u0000\u0006\u0000\u0003\u0080\u0001\u00c0\u0000\u0061\u0000\u0033\u0000\u001e\u0000\u000c\u0000\u0000\u0000\u0000\u0000\u0000\u0000"));
-	private static Image ICDEL = new Image(
-			12,
-			16,
-			Utils.stringToBytes8("\u0000\u0000\u0000\u0000\u0000\u0000\u00f0\u000f\u00f8\u000f\u00dc\r\u00be\u000e\u007f\u000f\u00be\u000e\u00dc\r\u00f8\u000f\u00f0\u000f\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000"));
-	private static Image ICSHIFT = new Image(
-			12,
-			16,
-			Utils.stringToBytes8("\u0000\u0000\u0000\u0000\u0060\u0000\u00f0\u0000\u0098\u0001\u000c\u0003\u0006\u0006\u000e\u0007\u0008\u0001\u0008\u0001\u0008\u0001\u00f8\u0001\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000"));
-	private static Image ICSHIFTON = new Image(
-			12,
-			16,
-			Utils.stringToBytes8("\u0000\u0000\u0000\u0000\u0060\u0000\u00f0\u0000\u00f8\u0001\u00fc\u0003\u00fe\u0007\u00fe\u0007\u00f8\u0001\u00f8\u0001\u00f8\u0001\u00f8\u0001\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000"));
-	private static Image ICSYMBOL = new Image(
-			12,
-			16,
-			Utils.stringToBytes8("\u0000\u0000\u0082\u0001\u00c3\u0003\u0063\u0007\u0033\u0006\u0033\u000c\u0003\u000c\u0003\u000c\u0003\u0006\u0003\u0003\u0083\u0001\u0083\u0001\u0083\u0001\u0000\u0000\u0000\u0000\u0083\u0001"));
-
+{	
 	private static GraphicsLCD lcd = LocalEV3.get().getGraphicsLCD();
 
 	private static String[][] keyboards = {
@@ -49,6 +28,12 @@ public class DefaultKeyboard extends InputMethod
 
 	public String call()
 	{
+		Image ic_ok = Icon.KEY_OK.loadIcon();
+		Image ic_symbol = Icon.KEY_SYMBOLS.loadIcon();
+		Image ic_del = Icon.KEY_DEL.loadIcon();
+		Image ic_shift = Icon.KEY_SHIFT.loadIcon();
+		Image ic_shifton = Icon.KEY_SHIFTON.loadIcon();
+		
 		int sx = 0, sy = 0, keyboard = 0;
 
 		lcd.setFont(Font.getDefaultFont());
@@ -93,19 +78,19 @@ public class DefaultKeyboard extends InputMethod
 
 					/* Draw Finish Key */
 					if (yi == 1 && xi == 10)
-						lcd.drawImage(ICOK, x - 1, y, 0);
+						lcd.drawImage(ic_ok, x - 1, y, 0);
 
 					/* Draw Symbol Key */
 					if (yi == 2 && xi == 10)
-						lcd.drawImage(ICSYMBOL, x - 1, y, 0);
+						lcd.drawImage(ic_symbol, x - 1, y, 0);
 
 					/* Draw Del Key */
 					if (yi == 0 && xi == 10)
-						lcd.drawImage(ICDEL, x - 1, y, 0);
+						lcd.drawImage(ic_del, x - 1, y, 0);
 
 					/* Draw Shift Key */
 					if (yi == 3 && (xi == 0 || xi == 10))
-						lcd.drawImage((keyboard == 1) ? ICSHIFTON : ICSHIFT,
+						lcd.drawImage((keyboard == 1) ? ic_shifton : ic_shift,
 								x - 1, y, 0);
 
 					/* Draw Space Bar */

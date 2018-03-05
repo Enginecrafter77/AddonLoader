@@ -12,7 +12,6 @@ import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 
 import addonloader.util.ObjectSettings;
-import lejos.ExceptionHandler;
 import lejos.Reference;
 
 /**
@@ -24,8 +23,6 @@ import lejos.Reference;
  */
 public class AddonLoader {
 	
-	/** Instance of running AddonLoader. */
-	public static AddonLoader instance;
 	/** AddonLoader configuration. */
 	public ObjectSettings props;
 	/** List of all addons to be runned. */
@@ -40,13 +37,14 @@ public class AddonLoader {
 	public AddonLoader(String config) throws FileNotFoundException, IOException
 	{
 		props = new ObjectSettings(config);
+		DefaultMenus.mainRegistry();
 	}
 	
 	/**
 	 * Scan addon folder for addons, and then process every jar to create MenuAddon list.
 	 * @throws FileNotFoundException If given directory is not found, or it is not a directory.
 	 */
-	private void loadAddons() throws FileNotFoundException
+	public void loadAddons() throws FileNotFoundException
 	{
 		if(!Boolean.parseBoolean(props.getProperty("enabled", "true")))
 		{
@@ -109,11 +107,11 @@ public class AddonLoader {
 			    if(MenuAddon.class.isAssignableFrom(cur_class))
 			    {
 			    	Annotation[] anr = cur_class.getAnnotations();
-			    	for(Annotation an : anr)
+			    	for(Annotation ann : anr)
 				    {
-				    	if(Addon.class.isAssignableFrom(an.getClass()))
+				    	if(Addon.class.isAssignableFrom(ann.getClass()))
 				    	{
-				    		Addon adn = (Addon)an;
+				    		Addon adn = (Addon)ann;
 				    		if(adn.apilevel() < Reference.API_LEVEL)
 				    		{
 				    			throw new InstantiationException(adn.name() + " uses incompatible API level " + adn.apilevel());
@@ -128,9 +126,7 @@ public class AddonLoader {
 			}
 			catch(NoClassDefFoundError e)
 			{
-				/* This try-catch block allows the addon to handle classes, that contain non-ev3-loadable code, like
-				 * pc windowing for client-side implementation etc.
-				 */
+				/* This try-catch block allows the addon to handle classes, that contain non-ev3-loadable code, like java AWT, SWING etc. */
 				System.err.println("[WARNING] " + file.getName() + " contains unloadable class " + clsname);
 			}
 			catch(InstantiationException e)
@@ -151,18 +147,6 @@ public class AddonLoader {
 		}
 		addons.add(main);
 		jar.close();
-	}
-	
-	/**
-	 * Initializes AddonLoader instance to load all the addons.
-	 * @throws see {@link #AddonLoader(config)}
-	 */
-	public static void init() throws IOException
-	{
-		AddonLoader.instance = new AddonLoader("/home/root/lejos/config/addons.conf");
-		AddonLoader.instance.loadAddons();
-		MenuRegistry.mainRegistry();
-		Thread.setDefaultUncaughtExceptionHandler(new ExceptionHandler());
 	}
 	
 	/**

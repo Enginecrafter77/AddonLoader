@@ -1,6 +1,6 @@
 package com.ec.entries;
 
-import com.ec.addonloader.lib.Icons;
+import addonloader.lib.Icon;
 import com.ec.main.KeyStorage;
 import com.ec.main.Main;
 
@@ -8,7 +8,7 @@ public class DeleteEntry extends APEntry {
 	
 	public DeleteEntry()
 	{
-		super("Delete", Icons.ICDelete);
+		super("Delete", Icon.DELETE);
 	}
 	
 	@Override

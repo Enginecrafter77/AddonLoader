@@ -2,269 +2,172 @@ package addonloader.lib.xml;
 
 import java.io.IOException;
 import java.io.PrintStream;
-import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Iterator;
-import java.util.Objects;
+import java.util.LinkedList;
 
-import addonloader.lib.DoubleObject;
 /**
- * This is a class that provides access for simple,
- * modificated xml tree, tags and their variables.
+ * XElement provides relatively lightweight implementation of Node type
+ * object for {@link XParser} XML parser.
  * @author Enginecrafter77.
- * @version 1.3.4721b
+ * @version 1.5
  */
 public class XElement {
-    
-    /** Element's parent. Null for root element. */
-    public final XElement parent;
-    /** A list of element childs. */
-    public final ArrayList<XElement> child;
-    /** A list of element variables */
-    private final ArrayList<Field> fields;
-    /** An element ID */
-    public final String name;
+	
+	/** An element ID */
+	public final String name;
+	/** Element's parent. Null for root element. */
+	public final XElement parent;
+	/** A list of element childs. */
+	public final LinkedList<XElement> children;
+	/** A list of element variables */
+	protected final HashMap<String, String> fields;
+	/** The textual content of the node. */
 	protected final StringBuilder content;
 	
-    /**
-     * A common constructor used to initialize the element.
-     * @param parent A parent element.
-     * @param name The name for the element. Example: <br> &lt input &gt will be input.
-     */
-    public XElement(XElement parent, String name)
-    {
-        this.parent = parent;
-        this.child = new ArrayList<>();
-        this.fields = new ArrayList<>();
-        this.name = name;
+	/**
+	 * A common constructor used to initialize the element.
+	 * @param parent A parent element.
+	 * @param name The name for the element. Example: <br> &lt input &gt will be input.
+	 */
+	public XElement(XElement parent, String name)
+	{
+		this.name = name;
+		this.parent = parent;
+		this.fields = new HashMap<>();
 		this.content = new StringBuilder();
-    }
-    
-    /**
-     * Root element constructor
-     */
-    protected XElement()
-    {
-        this(null, "root");
-    }
-    
-    /**
-     * Binds the child to it's parent.
-     * Protected =&gt used only by the parser.
-     * @return this
-     */
-    protected XElement parent()
-    {
-        if(parent != null)
-        {
-            parent.child.add(this);
-        }
-        return this;
-    }
-    
-    /**
-     * Function called by parser to parse values to fields.
-     * Protected =&gt used only by the parser.
-     * @param s - A tag content.
-     */
-    protected void parseValues(String s)
-    {
-        DoubleObject<String, ArrayList<String>> d = XParser.removeSequences(s, '\"');
-        String[] a = d.first.split(" ");
-        
-        for(int i = 0; i < a.length; i++)
-        {
-            if(i < d.second.size() && !XParser.isStringEmpty(a[i]))
-            {
-                fields.add(new Field(a[i].substring(0, a[i].lastIndexOf("=")), d.second.get(i)));
-            }
-        }
-    }
+		this.children = new LinkedList<>();
+	}
 	
+	/**
+	 * Extraordinary constructor used only internally by the {@link XParser}
+	 * do create document root reference node.
+	 * @param name The desired name of root element.
+	 */
+	protected XElement(String name)
+	{
+		this(null, name);
+	}
+	
+	/**
+	 * Prints tree in print stream.
+	 * @param format The tree item format.
+	 * @param out PrintStream to print tree to.
+	 */
+	public void printTree(PrintStream out)
+	{
+		printTree(0, out);
+	}
+	
+	/** Private recursive function to print element tree. */
+	private void printTree(int indent, PrintStream out)
+	{
+		for(int i = 0; i < indent; i++) out.print('\t');
+		if(indent > 0) out.print("|--> ");
+		out.print(this.toString());
+		out.println();
+		for(int i = 0; i < this.children.size(); i++)
+		{
+			this.children.get(i).printTree(indent + 1, out);
+		}
+	}
+	
+	/**
+	 * This function is used to match this element's name against others.
+	 * @param obj The other XElement to match against.
+	 * @return True if their names are equal, false otherwise.
+	 */
+	public boolean matches(XElement obj)
+	{
+		return this.name.equals(obj.name);
+	}
+
+	/** @return If element has content. */
+	public boolean hasContent()
+	{
+		return this.content.length() > 0;
+	}
+	
+	/** @return If element has children. */
+	public boolean hasChildren()
+	{
+		return this.children.size() > 0;
+	}
+	
+	/**
+	 * Element content is plain text found between the start tag and end tag of element.
+	 * The content does not include whitespaces by default.
+	 * @return The element's content.
+	 */
 	public String getContent()
 	{
 		return this.content.toString();
 	}
-    
+	
 	/**
-     * Prints tree in print stream.
-     * @param tab A tabulating character.
-     * @param p PrintStream to print to.
-     */
-    public void printTree(String tab, PrintStream p)
-    {
-    	p.print(tab);
-    	p.print(this.name);
-    	p.print("[" + this.fields + ']');
-    	if(this.hasContent())
-    	{
-    		p.print("{" + this.content.toString() + '}');
-    	}
-    	p.println();
-    	if(this.hasChild())
-    	{
-	        for(int i = 0; i < this.child.size(); i++)
-	        {
-	        	printTree(tab + "  ", p);
-	        }
-    	}
-    }
-    
-    public boolean hasContent()
-    {
-    	return this.content.length() > 0;
-    }
-    
-    public boolean equalNames(String s)
-    {
-        return this.name.equals(s);
-    }
-    
-    /**
-     * @return If element has children.
-     */
-    public boolean hasChild()
-    {
-    	return this.child.size() > 0;
-    }
-    
-    public XElement[] getChildren()
-    {
-    	return this.child.toArray(new XElement[0]);
-    }
-    
-    /**
-     * Gets a element's child by it's ID.
-     * @param id
-     * @return 
-     * @throws java.io.IOException 
-     */
-    public XElement getChild(String id) throws IOException
-    {
-        for(Iterator<XElement> it = child.iterator(); it.hasNext();)
-        {
-            XElement e = it.next();            
-            if(e.name.equals(id))
-            {
-                return e;
-            }
-        }
-        throw new IOException("Element's child \"" + id + "\" not found.");
-    }
-    
-    /**
-     * Used as a replacement for continously calling <code>getChild()</code> <br>
-     * Exaple: <br>
-     * [root_element].getChild("foo").getChild("something"); => <br>
-     * [root_element].getByPath("foo/something");
-     * @param path
-     * @return A end-path element.
-     * @throws java.io.IOException
-     */
-    public XElement getByPath(String path) throws IOException
-    {
-        String[] cl = path.split("/");
-        XElement res = this;
-        for(String c : cl)
-        {
-            res = res.getChild(c);
-        }
-        return res;
-    }
-    
-    /**
-     * A workaround to simpify <code>getByPath()</code> function.
-     * Must be called on root element. (name == root)
-     * @param path
-     * @return A end-path element.
-     * @throws java.io.IOException
-     */
-    public XElement getFromRoot(String path) throws IOException
-    {
-        if(this.name.equals("root"))
-        {
-            return this.getByPath("xml/" + path);
-        }
-        else
-        {
-            throw new IOException("Function not called from root");
-        }
-    }
-    
-    /**
-     * A debug function used to print simple xml hierarchy to console.
-     */
-    public void printTree()
-    {
-        printTree("|", System.out);
-    }
-    
-    /**
-     * Gets a value by field's ID
-     * @param id Field's ID
-     * @return Field content.
-     * @throws IOException If the field wasn't found.
-     */
-    public String getValue(String id) throws IOException
-    {
-        if(fields.contains(new Field(id)))
-        {
-        	return fields.get(fields.lastIndexOf(new Field(id))).value;
-        }
-        else
-        {
-        	throw new IOException("Field " + id + " not found.");
-        }
-    }
-    
-    @Override
-    public String toString()
-    {
-    	return this.name + (this.parent != null ? "(" + this.parent.name + ")" : "") + this.fields + "{" + this.getContent() + "}";
-    }
-    
-    public static class Field
-    {
-        public final String name;
-        public final String value;
-        
-        public Field(String name, String value)
-        {
-            this.name = name;
-            this.value = value;
-        }
-        
-        protected Field(String name)
-        {
-            this.name = name;
-            this.value = null;
-        }
-
-        @Override
-        public String toString()
-        {
-            return name + ":" + value;
-        }
-        
-        @Override
-        public boolean equals(Object f)
-        {
-            boolean res = false;
-            if(f instanceof Field)
-            {
-                if(((Field)f).name.equals(this.name))
-                {
-                    res = true;
-                }
-            }
-            return res;
-        }
-
-        @Override
-        public int hashCode()
-        {
-            int hash = 3;
-            hash = 47 * hash + Objects.hashCode(this.name);
-            return hash;
-        }
-    }
+	 * Returns wether the element has some parameter or not.
+	 * @param id The name of the parameter.
+	 * @return True if the parameter was specified in the element.
+	 */
+	public boolean hasValue(String id)
+	{
+		return this.fields.containsKey(id);
+	}
+	
+	/**
+	 * Gets a element's child by it's ID.
+	 * @param id
+	 * @return 
+	 * @throws java.io.IOException 
+	 */
+	public XElement getChild(String id) throws IOException
+	{
+		Iterator<XElement> it = children.iterator();
+		XElement current = null;
+		while(it.hasNext())
+		{
+			current = it.next();
+			if(current.name.equals(id)) return current;
+		}
+		throw new IOException("Element's child \"" + id + "\" not found.");
+	}
+	
+	/**
+	 * Used as a replacement for continously calling <code>getChild()</code> <br>
+	 * Exaple: <br>
+	 * [root_element].getChild("foo").getChild("something"); => <br>
+	 * [root_element].getByPath("foo/something");
+	 * @param path
+	 * @return A end-path element.
+	 * @throws java.io.IOException
+	 */
+	public XElement getByPath(String path) throws IOException
+	{	
+		XElement current = this;
+		for(String name : path.split("/")) current = current.getChild(name);
+		return current;
+	}
+	
+	/**
+	 * Gets a value by field's ID
+	 * @param id Field's ID
+	 * @return Field content.
+	 * @throws NoSuchFieldException If the field wasn't found.
+	 */
+	public String getValue(String id) throws NoSuchFieldException
+	{
+		String value = fields.get(id);
+		if(value == null) throw new NoSuchFieldException("Field " + id + " doesn't exist.");
+		return value;
+	}
+	
+	@Override
+	public String toString()
+	{
+		StringBuilder text = new StringBuilder();
+		text.append(this.name);
+		if(this.fields.size() > 0) text.append(this.fields.toString());
+		if(this.content.length() > 0) text.append("[" + this.content.toString() + "]");
+		return text.toString();
+	}
 }

@@ -2,6 +2,10 @@ package addonloader.util;
 
 import java.util.concurrent.Callable;
 
+/**
+ * Class specifing the method used to enter text on the screen.
+ * @author Enginecrafter77
+ */
 public abstract class InputMethod implements Callable<String> {
 	
 	public static InputMethod current;

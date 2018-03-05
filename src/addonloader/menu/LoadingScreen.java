@@ -2,22 +2,34 @@ package addonloader.menu;
 
 
 import addonloader.util.MenuUtils;
+import lejos.Utils;
 import lejos.hardware.ev3.LocalEV3;
 import lejos.hardware.lcd.GraphicsLCD;
 import lejos.hardware.lcd.LCD;
 import lejos.utility.Delay;
 
-public class LoadingAnimation{
+/**
+ * Simple loading screen with progressbar,
+ * indicating the current state of loading.
+ * Displays also something like 'annoybar'
+ * cycling dashes and spaces at the top of the screen,
+ * used to indicate system activity => if the bar
+ * is frozen, the system is so.
+ * @author Enginecrafter77
+ */
+public class LoadingScreen{
 	
+	/** Progress of the progressbar displayed in percent */
 	private int progress;
 	private GraphicsLCD lcd;
-	private int lastPixel;
-	private Immitator t;
+	private AnnoyBar annoybar;
 	
-	public LoadingAnimation()
+	/**
+	 * Constructs the LoadingScreen
+	 */
+	public LoadingScreen()
 	{
 		this.progress = 0;
-		this.lastPixel = 9;
 		this.lcd = LocalEV3.ev3.getGraphicsLCD();
 	}
 	
@@ -71,8 +83,8 @@ public class LoadingAnimation{
 		lcd.setStrokeStyle(GraphicsLCD.SOLID);
 		lcd.drawRect(7, 100, 163, 19);
 		lcd.drawString(title, 85, 10, GraphicsLCD.TOP | GraphicsLCD.HCENTER);
-		t = new Immitator();
-		t.start();
+		annoybar = new AnnoyBar('=');
+		annoybar.start();
 	}
 	
 	/**
@@ -80,7 +92,7 @@ public class LoadingAnimation{
 	 */
 	public void stop()
 	{
-		t.interrupt();
+		annoybar.interrupt();
 		lcd.clear();
 	}
 	
@@ -89,9 +101,9 @@ public class LoadingAnimation{
 	 */
 	private void redrawBar()
 	{
-		int pg = (int)(progress / 0.625) + 9; //9 is the starting value, so it shifts the whole row.
-		lcd.fillRect(lastPixel, 102, pg - lastPixel, 16);
-		lastPixel = pg;
+		//We first remap the progress in new range <0;161>
+		//and then draw the rectangle using widht from our mapped number.
+		lcd.fillRect(9, 102, Utils.map(progress, 0, 100, 0, 161), 16);
 	}
 	
 	/**
@@ -99,6 +111,7 @@ public class LoadingAnimation{
 	 */
 	public void reset()
 	{
+		this.progress = 0;
 		lcd.setColor(GraphicsLCD.WHITE);
 		lcd.fillRect(9, 102, 161, 16);
 		lcd.setColor(GraphicsLCD.BLACK);
@@ -110,32 +123,30 @@ public class LoadingAnimation{
 	 * May seem useless, but it is really useful to detect system freeze.
 	 * @author Enginecrafter77
 	 */
-	private class Immitator extends Thread
+	private class AnnoyBar extends Thread
 	{	
 		private static final int dots_max = 12;
-		private static final char filler = '=';
+		private final char fill;
 		private int dots;
 		private boolean reverse;
 		
-		public Immitator()
+		public AnnoyBar(char fill)
 		{
+			this.fill = fill;
 			this.dots = -1;
 			this.reverse = false;
 		}
 		
 		@Override
 		public void run()
-		{			
-			LCD.drawChar('|', 1, 2);
+		{
+			LCD.drawChar('|', 1, 2); //Draws the 'boundaries'
 			LCD.drawChar('|', 15, 2);
-			while(!this.isInterrupted())
+			while(!this.isInterrupted()) //Cycle while not interrupted
 			{
-				if(dots == dots_max)
-				{
-					reverse = !reverse;
-				}
-				dots = MenuUtils.cycleValue(dots, 0, dots_max, 1);
-				LCD.drawChar(reverse ? ' ' : filler, 2 + dots, 2);
+				if(dots == dots_max) reverse = !reverse; //If the dots are at the end, start to erase
+				dots = MenuUtils.cycleValue(dots, 0, dots_max, 1); //Cycle the position
+				LCD.drawChar(reverse ? ' ' : fill, 2 + dots, 2); //If we are drawing in reverse, erase with ' ', else add fill
 				Delay.msDelay(1000);
 			}
 		}

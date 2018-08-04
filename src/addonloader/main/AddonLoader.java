@@ -11,7 +11,6 @@ import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 
 import addonloader.util.ObjectSettings;
-import lejos.Reference;
 
 /**
  * The main class of AddonLoader. It does the main job of addon loading process.
@@ -102,7 +101,6 @@ public class AddonLoader {
 				{
 					main = (MenuAddon)cur_class.newInstance();
 					main.jarfile = file;
-					if(main.apilevel < Reference.API_LEVEL) throw new InstantiationException(String.format("Addon %s uses incompatible API level (%d).", main.name, main.apilevel));
 				}
 			}
 			catch(NoClassDefFoundError exc) // This block allows the addon to handle classes that contain non-ev3-loadable code, such as java AWT, SWING, and other external libraries.

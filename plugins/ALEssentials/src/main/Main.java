@@ -21,7 +21,7 @@ public class Main extends MenuAddon {
 	
 	public Main()
 	{
-		super(71, "AL-Essential");
+		super("AL-Essential");
 	}
 	
 	@Override
@@ -33,7 +33,7 @@ public class Main extends MenuAddon {
 			@Override
 			public void run()
 			{
-				MainMenu.addon_loader.props.setProperty("enabled", String.valueOf(!MenuUtils.askConfirm("Disable Addon Loader?", false)));
+				MainMenu.addon_loader.props.setProperty("enabled", String.valueOf(!MenuUtils.askConfirm("Disable Addon Loader?")));
 				MainMenu.addon_loader.props.store("AddonLoader config");
 			}
 		};
@@ -63,7 +63,9 @@ public class Main extends MenuAddon {
 	public void load()
 	{
 		upd.start();
-		advboot.add(reboot, restart, exit);
+		advboot.add(reboot);
+		advboot.add(restart);
+		advboot.add(exit);
 		MappedMenu.system.add(disable);
 		MappedMenu.boot_menu.add(advboot);
 	}

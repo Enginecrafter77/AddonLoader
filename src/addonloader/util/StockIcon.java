@@ -1,5 +1,6 @@
 package addonloader.util;
 
+import addonloader.util.ui.Icon;
 import lejos.Reference;
 import lejos.hardware.lcd.Image;
 
@@ -70,5 +71,11 @@ public enum StockIcon implements Icon {
 		{
 			return null;
 		}
+	}
+	
+	@Override
+	public String toString()
+	{
+		return this.name();
 	}
 }

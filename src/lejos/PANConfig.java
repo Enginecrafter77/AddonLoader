@@ -8,14 +8,16 @@ import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.List;
 
-import addonloader.util.Icon;
+import addonloader.menu.MappedMenu;
 import addonloader.util.MenuUtils;
 import addonloader.util.StockIcon;
+import addonloader.util.ui.Icon;
 import lejos.hardware.Bluetooth;
 import lejos.hardware.BluetoothException;
 import lejos.hardware.BrickFinder;
 import lejos.hardware.Button;
 import lejos.hardware.RemoteBTDevice;
+import lejos.utility.TextMenu;
 
 public class PANConfig {
 	public static final int MODE_NONE = 0;
@@ -114,6 +116,8 @@ public class PANConfig {
 	
 	public void init(int mode)
 	{
+		MappedMenu.pan = new MappedMenu("PAN", modeNames, modeIcons);
+		
 		if (mode != curMode)
 		{
 			for(int i = 0; i < IPAddresses.length; i++)
@@ -283,12 +287,12 @@ public class PANConfig {
 	private String getIPAddress(String title, String ip)
 	{
 		String [] strings = {"Automatic", "Advanced"};
-		GraphicMenu menu = new ListMenu(strings, 4);
+		TextMenu menu = new TextMenu(strings, 4);
 		MainMenu.self.newScreen(title);
 		String dispIP = getDisplayIP(ip);
 		MainMenu.lcd.drawString(dispIP, (MainMenu.lcd.getTextWidth() - dispIP.length())/2, 2);
 		menu.setItems(strings);
-		int selection = menu.getSelection(isAutoIP(ip) ? 0 : 1);
+		int selection = menu.select(isAutoIP(ip) ? 0 : 1);
 		switch (selection)
 		{
 		case 0:
@@ -309,14 +313,14 @@ public class PANConfig {
 	private String getBTService(String title, String service)
 	{
 		String [] strings = serviceNames;
-		GraphicMenu menu = new ListMenu(strings, 4);
+		TextMenu menu = new TextMenu(strings, 4);
 		MainMenu.self.newScreen(title);
 		MainMenu.lcd.drawString(service, (MainMenu.lcd.getTextWidth() - service.length())/2, 2);
 		menu.setItems(strings);
 		int item = 0;
 		while(!strings[item].equalsIgnoreCase(service))
 			item++;
-		int selection = menu.getSelection(item);
+		int selection = menu.select(item);
 		if (selection > 0)
 			return strings[selection];
 		else
@@ -329,7 +333,7 @@ public class PANConfig {
 		int selection = 0;
 		int extra = (curMode == MODE_BTC ? 2 : curMode == MODE_USBC ? 1 : 0);
 		String [] strings = new String[IPAddresses.length + extra];
-		GraphicMenu menu = new ListMenu(strings);
+		TextMenu menu = new TextMenu(strings);
 		while(selection >= 0)
 		{
 			MainMenu.self.newScreen(modeNames[curMode]);
@@ -341,14 +345,14 @@ public class PANConfig {
 				strings[IPAddresses.length+1] = "Service " + BTService;
 			
 			menu.setItems(strings);
-			selection = menu.getSelection(selection);
+			selection = menu.select(selection);
 			if (selection < 0) break;
 			changed = true;
 			if (selection < IPAddresses.length)
 				IPAddresses[selection] = getIPAddress(IPNames[selection], IPAddresses[selection]);
 			else if (selection == IPAddresses.length)
 			{
-				if(MenuUtils.askConfirm("Persist Connection", persist.equalsIgnoreCase("Y")))
+				if(MenuUtils.askConfirm("Persist Connection"))
 				{
 					persist = "Y";
 				}
@@ -392,10 +396,10 @@ public class PANConfig {
 			i++;
 		}
 
-		ListMenu deviceMenu = new ListMenu(names);
+		TextMenu deviceMenu = new TextMenu(names);
 		int selected = 0;
 		MainMenu.self.newScreen("Devices");
-		selected = deviceMenu.getSelection(selected);
+		selected = deviceMenu.select(selected);
 		if (selected >= 0)
 		{
 			RemoteBTDevice btrd = devList.get(selected);
@@ -409,7 +413,7 @@ public class PANConfig {
 	public void configureBTClient(String title)
 	{
 		String [] strings = {"Any", "Select", "Advanced"};
-		GraphicMenu menu = new ListMenu(strings, 4);
+		TextMenu menu = new TextMenu(strings, 4);
 		while (true)
 		{
 			MainMenu.self.newScreen(title);
@@ -417,7 +421,7 @@ public class PANConfig {
 			MainMenu.lcd.drawString(dispIP, (MainMenu.lcd.getTextWidth() - dispIP.length())/2, 2);
 			if (!isAnyAP(BTAPName))
 				MainMenu.lcd.drawString(BTAPAddress, (MainMenu.lcd.getTextWidth() - BTAPAddress.length())/2, 3);					
-			int selection = menu.getSelection(isAnyAP(BTAPName) ? 0 : 1);
+			int selection = menu.select(isAnyAP(BTAPName) ? 0 : 1);
 			switch (selection)
 			{
 			case 0:
@@ -450,19 +454,10 @@ public class PANConfig {
 	public void panMenu()
 	{
 		int selection = 0;
-		GraphicMenu menu = new GraphicMenu(null,null,3);
+		MappedMenu menu = MappedMenu.pan;
 		do
 		{
-			MainMenu.self.newScreen("PAN");
-			try
-			{
-				menu.setItems(modeNames, Icon.loadIcons(modeIcons));
-			}
-			catch(Exception exc)
-			{
-				menu.setItems(modeNames);
-			}
-			selection = menu.getSelection(curMode);
+			selection = menu.open();
 			if (selection >= 0)
 			{
 				init(selection);

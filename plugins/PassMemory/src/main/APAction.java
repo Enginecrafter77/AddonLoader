@@ -1,10 +1,10 @@
-package com.ec.main;
+package main;
 
 import java.io.StringReader;
 
 import addonloader.menu.InputMethod;
 import addonloader.menu.SimpleMenuEntry;
-import addonloader.util.Icon;
+import addonloader.util.ui.Icon;
 import lejos.MainMenu;
 import lejos.NetUtils;
 

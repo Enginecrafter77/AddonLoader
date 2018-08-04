@@ -21,11 +21,8 @@ public abstract class MenuAddon {
 	 */
 	public final String name;
 	
-	public final int apilevel;
-	
-	protected MenuAddon(final int apilevel, final String name)
+	protected MenuAddon(final String name)
 	{
-		this.apilevel = apilevel;
 		this.name = name;
 	}
 	

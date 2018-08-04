@@ -1,17 +1,18 @@
 package addonloader.menu;
 
-import addonloader.util.Icon;
+import addonloader.util.ui.Icon;
 import lejos.MainMenu;
 
 public class SubmenuEntry extends MappedMenu implements MenuEntry {
 	
-	private final String title;
+	private static final long serialVersionUID = 3254268740010579131L;
+	
 	private final Icon icon;
 	private final boolean single_shot;
 	
 	public SubmenuEntry(String name, Icon icon, boolean single_shot)
 	{
-		this.title = name;
+		super(name);
 		this.icon = icon;
 		this.single_shot = single_shot;
 	}
@@ -28,10 +29,11 @@ public class SubmenuEntry extends MappedMenu implements MenuEntry {
 		do
 		{
 			MainMenu.self.newScreen(this.title);
-			selection = this.getSelection(selection);
-			this.custom_entries.get(selection).run();
+			selection = this.open();
+			if(selection < 0) break;
+			this.get(selection).run();
 		}
-		while(!single_shot && selection > -1);
+		while(!single_shot);
 	}
 
 	@Override

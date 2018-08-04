@@ -1,4 +1,4 @@
-package com.ec.main;
+package main;
 
 import java.util.Enumeration;
 
@@ -17,8 +17,7 @@ public class APList extends SimpleMenuEntry {
 	@Override
 	public void run()
 	{
-		//TODO FIX - Displays PSKs (values), not keys as expected.
-		Enumeration<Object> enm = Main.key_storage.elements();
+		Enumeration<Object> enm = Main.key_storage.keys();
 		String[] known_access_points = new String[Main.key_storage.size()];
 		
 		for(int index = 0; enm.hasMoreElements(); index++) known_access_points[index] = (String)enm.nextElement();
@@ -32,8 +31,8 @@ public class APList extends SimpleMenuEntry {
 		while(selection > -1)
 		{
 			MainMenu.self.newScreen(known_access_points[selection]);
-			selection = Main.access_point.select();
-			Main.access_point.onExternalAction(selection);
+			selection = Main.access_point.open();
+			Main.access_point.get(selection).run();
 		}
 	}
 

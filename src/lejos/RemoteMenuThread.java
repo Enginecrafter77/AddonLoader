@@ -152,7 +152,7 @@ public class RemoteMenuThread extends Thread {
 								MainMenu.self.shutdown();
 								break;
 							case GET_EXECUTING_PROGRAM_NAME:
-								reply.value = MainMenu.self.getRunningName();
+								reply.value = MainMenu.programName;
 								os.writeObject(reply);
 								break;
 							case SUSPEND:

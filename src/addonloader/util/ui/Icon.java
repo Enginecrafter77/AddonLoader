@@ -1,4 +1,4 @@
-package addonloader.util;
+package addonloader.util.ui;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
@@ -6,6 +6,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.concurrent.Callable;
 
+import addonloader.util.BinaryStorage;
 import lejos.hardware.lcd.Image;
 
 public interface Icon extends Callable<Image> {

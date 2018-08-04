@@ -1,4 +1,4 @@
-package com.ec.main;
+package main;
 
 import java.io.File;
 import java.io.FileReader;
@@ -28,18 +28,18 @@ public class Main extends MenuAddon {
 	
 	public Main()
 	{
-		super(71, "PassMemory");
+		super("PassMemory");
 	}
 	
 	@Override
 	public void init()
 	{
-		key_storage_file = new File("/home/root/lejos/config/stored_pass");
+		key_storage_file = new File("/home/root/lejos/config/wifipsk.list");
 		key_storage = new Properties();
 		cncact = new ConnectAction();
 		
 		password_manager = new SubmenuEntry("Passwords", StockIcon.KEY);
-		access_point = new MappedMenu();
+		access_point = new MappedMenu("AP");
 		access_point_list = new APList();
 		wifi_toggle = new WifiToggleEntry();
 		
@@ -53,8 +53,12 @@ public class Main extends MenuAddon {
 	public void load()
 	{
 		cncact.attach();
-		access_point.add(ap_connect, ap_info, ap_modify, ap_delete);
-		password_manager.add(wifi_toggle, access_point_list);
+		access_point.add(ap_connect);
+		access_point.add(ap_info);
+		access_point.add(ap_modify);
+		access_point.add(ap_delete);
+		password_manager.add(wifi_toggle);
+		password_manager.add(access_point_list);
 		MappedMenu.system.add(password_manager);
 		
 		try

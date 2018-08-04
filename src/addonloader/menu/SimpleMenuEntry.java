@@ -1,6 +1,6 @@
 package addonloader.menu;
 
-import addonloader.util.Icon;
+import addonloader.util.ui.Icon;
 
 public abstract class SimpleMenuEntry implements MenuEntry {
 	

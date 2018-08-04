@@ -1,6 +1,6 @@
 package addonloader.menu;
 
-import addonloader.util.Icon;
+import addonloader.util.ui.Icon;
 
 /**
  * Interface representing entry in MappedMenu. MenuEntry extends Runnable,

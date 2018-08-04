@@ -12,6 +12,7 @@ import lejos.hardware.lcd.TextLCD;
  * 
  * @author Abram Early
  */
+@Deprecated
 public class ListMenu extends GraphicMenu {
 	
 	private TextLCD lcd = LocalEV3.get().getTextLCD();

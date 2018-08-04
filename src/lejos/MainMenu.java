@@ -26,17 +26,18 @@ import java.util.jar.JarFile;
 import addonloader.main.AddonLoader;
 import addonloader.main.LoadingStage;
 import addonloader.menu.MappedMenu;
+import addonloader.menu.MenuEntry;
 import addonloader.menu.HookRegistry;
 import addonloader.menu.InputMethod;
-import addonloader.menu.LoadingScreen;
 import addonloader.menu.SimpleMenuEntry;
 import addonloader.util.DataSize;
-import addonloader.util.Icon;
+import addonloader.util.LoadingScreen;
 import addonloader.util.MenuUtils;
 import addonloader.util.StockIcon;
 import addonloader.util.Viewer;
+import addonloader.util.ui.Icon;
 import lejos.utility.Delay;
-import lejos.ListMenu;
+import lejos.utility.TextMenu;
 import lejos.Utils;
 import lejos.hardware.Battery;
 import lejos.hardware.Bluetooth;
@@ -72,22 +73,33 @@ public class MainMenu implements Menu {
 	public static TextLCD lcd;
 	public static Viewer default_viewer;
 	
+	protected static Process program; // the running user program, if any
+	protected static String programName; // The name of the running program
+	private static final String[] bluetoothVersions = {"1.0b", "1.1", "1.2", "2.0", "2.1", "3.0", "4.0"};
 	private static String lejosversion, menuversion;
-	private static GraphicMenu curMenu;
 	private static LocalBTDevice bt;
-	private static Process program; // the running user program, if any
-	private static String programName; // The name of the running program
 	private static EchoThread echoIn, echoErr;
 	private static boolean suspend = false;
 	
 	public int timeout;
-	public PANConfig panConfig;
+	protected PANConfig panConfig;
 	protected IndicatorThread ind;
 	protected InfoBar indiBA;
 	protected RConsole rcons;
 	protected RemoteMenuThread remoteMenuThread;
 	private WaitScreen waitScreen;
-	private int shouldExit; // 0 = no exitting; 1 = exit; 2 = exit & shutdown
+	
+	/**
+	 * @param exit_state should be one of the following:
+	 * <table>
+	 * 	<tr><td>0: No Exitting / Cancel Exitting</td></tr>
+	 * 	<tr><td>1: Soft exit (Terminate menu)</td></tr>
+	 * 	<tr><td>2: Restart (Menu restarts itself)</td></tr>
+	 * 	<tr><td>3: Shutdown (init 0)</td></tr>
+	 * 	<tr><td>4: Reboot (init 6)</td></tr>
+	 * </table>
+	 */
+	public int exit = 0;
 	
 	public MainMenu()
 	{
@@ -98,7 +110,7 @@ public class MainMenu implements Menu {
 		waitScreen = WaitScreen.instance;
 		panConfig = new PANConfig();
 		timeout = 0;
-		shouldExit = 0;
+		exit = 0;
 	}
 	
 	public static void main(String[] args) throws Exception
@@ -124,14 +136,15 @@ public class MainMenu implements Menu {
 		MainMenu.bt = Bluetooth.getLocalDevice();
 		MainMenu.lcd = LocalEV3.get().getTextLCD();
 		MainMenu.self = new MainMenu();
+		loading.setState("Load icons...", 25);
 		MainMenu.init_menus();
-		loading.setState("Load JAR files", 25);
+		loading.setState("Load JAR files", 35);
 		addon_loader.loadAddons();
-		loading.setState("Init addons", 35);
+		loading.setState("Init addons", 40);
 		LoadingStage.INIT.proccess(addon_loader.addons);
-		loading.setState("Load addons", 55);
+		loading.setState("Load addons", 60);
 		LoadingStage.LOAD.proccess(addon_loader.addons);
-		loading.setState("Start Network", 65);
+		loading.setState("Start Network", 70);
 		self.updateIPAddresses();
 		loading.addProgress(10);
 		self.startNetworkServices();
@@ -156,37 +169,29 @@ public class MainMenu implements Menu {
 	
 	private static void init_menus()
 	{
-		try
+		MappedMenu.root = new MappedMenu(hostname, new String[]{"Run Default", "Programs", "Samples", "Tools", "Bluetooth", "Wifi", "PAN", "Sound", "System", "Version"}, new Icon[]{StockIcon.DEFAULT,StockIcon.PROGRAMS,StockIcon.SAMPLES,StockIcon.TOOLS,StockIcon.BLUETOOTH,StockIcon.WIFI,StockIcon.NETWORK,StockIcon.SOUND,StockIcon.EV3BRICK,StockIcon.LEJOS});
+		MappedMenu.system = new MappedMenu("System", new String[]{"Delete Programs", "Auto Run", "Change Name", "NTP", "Suspend Menu", "Close IO", "Unset Default"}, new Icon[]{StockIcon.FORMAT,StockIcon.AUTORUN,StockIcon.EDIT,StockIcon.JAVA,StockIcon.SLEEP,StockIcon.NO,StockIcon.JAVA});
+		MappedMenu.sound = new MappedMenu("Sound", new String[]{"", "", "", ""}, new Icon[]{StockIcon.SOUND, StockIcon.SOUND, StockIcon.SOUND, StockIcon.SOUND});
+		MappedMenu.bluetooth = new MappedMenu("Bluetooth", new String[]{"Search/Pair", "Devices", "Visibility", "Change PIN", "Information"}, new Icon[]{StockIcon.SEARCH, StockIcon.EV3BRICK, StockIcon.EYE, StockIcon.KEY, StockIcon.INFO});
+		MappedMenu.file = new MappedMenu("File", new String[]{"View", "Delete"},new Icon[]{StockIcon.DIRECTORY, StockIcon.DELETE});
+		MappedMenu.executable = new MappedMenu("JAR", new String[]{"Run", "Debug", "Set as Default", "Delete"},new Icon[]{StockIcon.JAVA, StockIcon.DEBUG, StockIcon.DEFAULT, StockIcon.DELETE});
+		MappedMenu.bluetooth_dev = new MappedMenu("Bluetooth", new String[]{"Remove"}, new Icon[]{StockIcon.DELETE});
+		MappedMenu.boot_menu = new MappedMenu("Boot", new String[]{"Shutdown", "Cancel"}, new Icon[]{StockIcon.POWER, StockIcon.NO});
+		
+		if(!Boolean.parseBoolean(MainMenu.addon_loader.props.getProperty("enabled", "true")))
 		{
-			MappedMenu.root = new MappedMenu(new String[]{"Run Default", "Programs", "Samples", "Tools", "Bluetooth", "Wifi", "PAN", "Sound", "System", "Version"}, new Icon[]{StockIcon.DEFAULT,StockIcon.PROGRAMS,StockIcon.SAMPLES,StockIcon.TOOLS,StockIcon.BLUETOOTH,StockIcon.WIFI,StockIcon.NETWORK,StockIcon.SOUND,StockIcon.EV3BRICK,StockIcon.LEJOS});
-			MappedMenu.system = new MappedMenu(new String[]{"Delete Programs", "Auto Run", "Change Name", "NTP", "Suspend Menu", "Close IO", "Unset Default"}, new Icon[]{StockIcon.FORMAT,StockIcon.AUTORUN,StockIcon.EDIT,StockIcon.JAVA,StockIcon.SLEEP,StockIcon.NO,StockIcon.JAVA});
-			MappedMenu.sound = new MappedMenu(new String[]{"", "", "", ""}, new Icon[]{StockIcon.SOUND, StockIcon.SOUND, StockIcon.SOUND, StockIcon.SOUND});
-			MappedMenu.bluetooth = new MappedMenu(new String[]{"Search/Pair", "Devices", "Visibility", "Change PIN", "Information"}, new Icon[]{StockIcon.SEARCH, StockIcon.EV3BRICK, StockIcon.EYE, StockIcon.KEY, StockIcon.INFO});
-			MappedMenu.file = new MappedMenu(new String[]{"View", "Delete"},new Icon[]{StockIcon.DIRECTORY, StockIcon.DELETE});
-			MappedMenu.executable = new MappedMenu(new String[]{"Run", "Debug", "Set as Default", "Delete"},new Icon[]{StockIcon.JAVA, StockIcon.DEBUG, StockIcon.JAVA, StockIcon.DELETE});
-			MappedMenu.bluetooth_dev = new MappedMenu(new String[]{"Remove"}, new Icon[]{StockIcon.DELETE});
-			MappedMenu.boot_menu = new MappedMenu(new String[]{"Shutdown", "Cancel"}, new Icon[]{StockIcon.POWER, StockIcon.NO});
-			
-			if(!Boolean.parseBoolean(MainMenu.addon_loader.props.getProperty("enabled", "true")))
-			{
-				MappedMenu.system.add(new SimpleMenuEntry("Enable AL", StockIcon.TOOLS){
-					@Override
-					public void run()
+			MappedMenu.system.add(new SimpleMenuEntry("Enable AL", StockIcon.TOOLS){
+				@Override
+				public void run()
+				{
+					if(MenuUtils.askConfirm("Enable Addon Loader?"))
 					{
-						if(MenuUtils.askConfirm("Enable Addon Loader?", false))
-						{
-							MainMenu.addon_loader.props.setProperty("enabled", "true");
-							MainMenu.addon_loader.props.store("AddonLoader config");
-							MainMenu.self.restart();
-						}
+						MainMenu.addon_loader.props.setProperty("enabled", "true");
+						MainMenu.addon_loader.props.store("AddonLoader config");
+						MainMenu.self.exit = 2;
 					}
-				});
-			}
-		}
-		catch(IOException exc)
-		{
-			System.err.println("[FATAL] I/O Exception occured whilst loading icon from database.");
-			exc.printStackTrace();
+				}
+			});
 		}
 	}
 	
@@ -234,11 +239,11 @@ public class MainMenu implements Menu {
 		//DEBUGME MainMenu
 		MappedMenu menu = MappedMenu.root;
 		int selection = 0;
-		while(true)
+		while(this.exit == 0)
 		{
 			newScreen(hostname);
 			ind.setDisplayState(IND_FULL);
-			selection = menu.getSelection(selection);
+			selection = menu.open();
 			ind.setDisplayState(IND_NORMAL);
 			switch(selection)
 			{
@@ -246,13 +251,13 @@ public class MainMenu implements Menu {
 					mainRunDefault();
 					break;
 				case 1:
-					filesMenu(PROGRAMS_DIRECTORY, false);
+					filesMenu(new File(PROGRAMS_DIRECTORY), false);
 					break;
 				case 2:
-					filesMenu(SAMPLES_DIRECTORY, false);
+					filesMenu(new File(SAMPLES_DIRECTORY), false);
 					break;
 				case 3:
-					filesMenu(TOOLS_DIRECTORY, true);
+					filesMenu(new File(TOOLS_DIRECTORY), true);
 					break;
 				case 4:
 					bluetoothMenu();
@@ -276,25 +281,10 @@ public class MainMenu implements Menu {
 					bootMenu();
 					break;
 				default:
-					menu.onExternalAction(selection);
+					menu.get(selection).run();
 					break;
 			}
-			
-			if(this.shouldExit > 0)
-			{
-				break;
-			}
 		}
-		
-		if(this.shouldExit == 2)
-		{
-			this.shutdown();
-		}
-	}
-	
-	protected String getRunningName()
-	{
-		return programName;
 	}
 	
 	/**
@@ -315,7 +305,7 @@ public class MainMenu implements Menu {
 		{
 			newScreen("Bluetooth");
 			LCD.drawString("Visible: " + (bt.getVisibility() ? "ON" : "OFF"), 1, 2);
-			selection = menu.getSelection(selection);
+			selection = menu.open();
 			switch(selection)
 			{
 				case 0:
@@ -333,8 +323,10 @@ public class MainMenu implements Menu {
 				case 4:
 					bluetoothInformation();
 					break;
+				case -1:
+					break;
 				default:
-					menu.onExternalAction(selection);
+					menu.get(selection).run();
 					break;
 			}
 		}
@@ -412,12 +404,12 @@ public class MainMenu implements Menu {
 			entries[i] = devices[i].getName();
 		}
 		
-		ListMenu menu = new ListMenu(entries);
+		TextMenu menu = new TextMenu(entries);
 		int selection = 0;
 		while(selection >= 0)
 		{
 			newScreen("Devices");
-			selection = menu.getSelection(selection);
+			selection = menu.select(selection);
 			if(selection >= 0)
 			{
 				RemoteBTDevice btd = devices[selection];
@@ -464,20 +456,20 @@ public class MainMenu implements Menu {
 			names[i] = devList.get(i).getName();
 		}
 
-		ListMenu deviceMenu = new ListMenu(names);
+		TextMenu deviceMenu = new TextMenu(names);
 		MappedMenu subMenu = MappedMenu.bluetooth_dev;
 		int selection = 0;
 		while(selection >= 0)
 		{
 			newScreen();
-			selection = deviceMenu.getSelection(selection);
+			selection = deviceMenu.select(selection);
 			if(selection >= 0)
 			{
 				newScreen();
 				RemoteBTDevice btrd = devList.get(selection);
 				lcd.drawString(btrd.getName(), 2, 2);
 				lcd.drawString(btrd.getAddress(), 0, 3);
-				int subSelection = subMenu.getSelection(0);
+				int subSelection = subMenu.open();
 				if(subSelection == 0)
 				{
 					try
@@ -498,13 +490,12 @@ public class MainMenu implements Menu {
 				}
 				else if(subSelection >= 0)
 				{
-					subMenu.onExternalAction(subSelection);
+					subMenu.get(selection).run();
 				}
 			}
 		}
 	}
-
-	private static final String[] bluetoothVersions = {"1.0b", "1.1", "1.2", "2.0", "2.1", "3.0", "4.0"};
+	
 	/**
 	 * Display Bluetooth information
 	 */
@@ -563,11 +554,11 @@ public class MainMenu implements Menu {
 			this.newScreen("System");
 			lcd.drawString("Battery: " + Battery.getVoltageMilliVolt() + "mV", 1, 1);
 			lcd.drawString(MenuUtils.getFreeRam(), 1, 2);
-			selection = menu.getSelection(selection);
+			selection = menu.open();
 			switch(selection)
 			{
 			case 0:
-				if(MenuUtils.askConfirm("Delete all programs?", false))
+				if(MenuUtils.askConfirm("Delete all programs?"))
 				{
 					MenuUtils.removeContent("/home/lejos/programs");
 				}
@@ -610,8 +601,10 @@ public class MainMenu implements Menu {
 					this.msg("Unset sucessfull");
 				}
 				break;
+			case -1:
+				break;
 			default:
-				menu.onExternalAction(selection);
+				menu.get(selection).run();
 			}
 		}
 	}
@@ -623,7 +616,7 @@ public class MainMenu implements Menu {
 	private void systemAutoRun()
 	{
 		File f = getDefaultProgram();
-		if (f == null)
+		if(f == null)
 		{
 	   		msg("No default set");
 	   		return;
@@ -633,27 +626,25 @@ public class MainMenu implements Menu {
 		lcd.drawString("Default Program:", 0, 2);
 		lcd.drawString(f.getName(), 1, 3);
 		
-		String current = Settings.getProperty(defaultProgramAutoRunProperty, "");
-		boolean yes = MenuUtils.askConfirm("Run at power up?", current.equals("ON"));
-		if(yes)
-		{
-			Settings.setProperty(defaultProgramAutoRunProperty, yes ? "ON" : "OFF");
-		}
+		Settings.setProperty(defaultProgramAutoRunProperty, MenuUtils.askConfirm("Run at power up?") ? "ON" : "OFF");
 	}
 	
 	private void bootMenu()
 	{
 		MappedMenu menu = MappedMenu.boot_menu;
-		int selection = menu.getSelection(1);
+		this.newScreen("Boot");
+		int selection = menu.open();
 		switch(selection)
 		{
 		case 0:
-			this.shouldExit = 2;
+			this.exit = 3;
 			break;
 		case 1:
 			break;
+		case -1:
+			break;
 		default:
-			menu.onExternalAction(selection);
+			menu.get(selection).run();
 		}
 	}
 	
@@ -685,7 +676,10 @@ public class MainMenu implements Menu {
 	private void soundMenu()
 	{
 		MappedMenu menu = MappedMenu.sound;
-		String[] res = menu.getItems();
+		String[] res = new String[menu.size()];
+		Iterator<MenuEntry> itr = menu.iterator();
+		for(int index = 0; itr.hasNext(); index++) res[index] = itr.next().getName();
+		
 		int selection = 0;
 		int mv = Integer.parseInt(Settings.getProperty(Sound.VOL_SETTING, "0"));
 		int kv = Integer.parseInt(Settings.getProperty(Button.VOL_SETTING, "0"));
@@ -698,7 +692,7 @@ public class MainMenu implements Menu {
 			res[1] = "Key Volume: " + kv;
 			res[2] = "Freq: " + kf + "Hz";
 			res[3] = "Length: " + kl + "ms";
-			selection = menu.getSelection(selection);
+			selection = menu.open();
 			switch(selection)
 			{
 			case 0:
@@ -718,8 +712,10 @@ public class MainMenu implements Menu {
 				kl = MenuUtils.cycleValue(kl, 50, 500, 50);
 				Button.setKeyClickLength(kl);
 				break;
+			case -1:
+				break;
 			default:
-				menu.onExternalAction(selection);
+				menu.get(selection).run();
 			}
 		}
 		MainMenu.lcd.clear();
@@ -786,7 +782,7 @@ public class MainMenu implements Menu {
 			return;
 		}
 		
-		int selection = menu.getSelection(0);
+		int selection = menu.open();
 		switch(selection)
 		{
 		case 0:
@@ -813,8 +809,10 @@ public class MainMenu implements Menu {
 		case 1:
 			file.delete();
 			break;
+		case -1:
+			break;
 		default:
-			menu.onExternalAction(selection);
+			menu.get(selection).run();
 			break;
 		}
 	}
@@ -827,7 +825,7 @@ public class MainMenu implements Menu {
 	private void executableMenu(File file, boolean isTool, MappedMenu menu)
 	{
 		String directory = file.getParent();
-		int selection = menu.getSelection(0);
+		int selection = menu.open();
 		switch(selection)
 		{
 		case 0:
@@ -878,8 +876,10 @@ public class MainMenu implements Menu {
 		case 3:
 			file.delete();
 			break;
+		case -1:
+			break;
 		default:
-			menu.onExternalAction(selection);
+			menu.get(selection).run();
 			break;
 		}
 	}
@@ -977,25 +977,6 @@ public class MainMenu implements Menu {
 		HookRegistry.RUN_PROG.runHooks(2);
 	}
 	
-	@Override
-	public void stopProgram() {		   
-		try {  
-			if (program == null) return;
-			program.destroy();
-			program.waitFor();
-			System.out.println("Program finished");
-		  }
-		  catch (Exception e) {
-			System.err.println("Failed to stop program: " + e);
-		  }
-		  finally
-		  {
-			  Button.LEDPattern(0);
-			  program = null;
-			  self.resume();			  
-		  }
-	}
-   
 	/**
 	 * Display the files in the file system.
 	 * Allow the user to choose a file for further operations.
@@ -1003,7 +984,7 @@ public class MainMenu implements Menu {
 	 */
 	private void filesMenu(File dir, boolean tools)
 	{
-		ListMenu menu = new ListMenu();
+		TextMenu menu = new TextMenu(null);
 		File[] files = dir.listFiles();;
 		menu.setItems(Utils.filesToString(files));
 		
@@ -1011,7 +992,7 @@ public class MainMenu implements Menu {
 		while(selection >= 0)
 		{
 			newScreen("Files");
-			selection = menu.getSelection(selection);
+			selection = menu.select(selection);
 			if(selection >= 0)
 			{
 				fileMenu(files[selection], tools);
@@ -1020,12 +1001,6 @@ public class MainMenu implements Menu {
 			}
 		}
 	}
-	
-	private void filesMenu(String dir, boolean tools)
-	{
-		this.filesMenu(new File(dir), tools);
-	}
-
 	
 	/**
 	 * Start a new screen display using the current title.
@@ -1065,45 +1040,6 @@ public class MainMenu implements Menu {
 			int buttons2 = Button.readButtons();
 			button = buttons2 & ~buttons;
 		} while (button != Button.ID_ESCAPE && System.currentTimeMillis() - start < 2000);
-	}
-
-	/**
-	 * If the menu is suspended wait for it to be resumed. Handle any program exit
-	 * while we wait.
-	 */
-	public void waitResume()
-	{
-		while (suspend) {
-			if (program != null && !echoIn.isAlive() && !echoErr.isAlive()) {
-				stopProgram();
-				break;
-			}
-			int b = Button.getButtons(); 
-			if (b == 6) {
-				if (program != null)
-					stopProgram();
-				else
-					// should we do this?
-					resume();
-				break;
-			}
-			Delay.msDelay(200);
-		}		
-	}
-	
-	/**
-	 * Sets the currently running menu.
-	 * @param menu
-	 */
-	public void setCurrentMenu(GraphicMenu menu)
-	{
-		MainMenu.curMenu = menu;
-	}
-	
-	@Override
-	public String getExecutingProgramName() {
-		if (program == null) return null;
-		return programName;
 	}
 	
 	/**
@@ -1152,6 +1088,258 @@ public class MainMenu implements Menu {
 		ips = result;
 		// have any of the important addresses changed?
 		return !(oldWlan == wlanAddress || (oldWlan != null && wlanAddress != null && wlanAddress.equals(oldWlan))) || !(oldPan == panAddress || (oldPan != null && panAddress != null && panAddress.equals(oldPan)));
+	}
+	
+	private void wifiMenu()
+	{
+		System.out.println("Finding access points ...");
+		LocalWifiDevice wifi = Wifi.getLocalDevice("wlan0");
+		String[] names;
+		try
+		{
+			names = wifi.getAccessPointNames();
+		}
+		catch(Exception e)
+		{
+			System.err.println("Exception getting access points: " + e);
+			msg("No Access Points found");
+			return;
+		}
+		for(int i = 0; i < names.length; i++)
+		{
+			if(names[i].isEmpty())
+			{
+				names[i] = "[HIDDEN]";
+			}
+		}
+		TextMenu menu = new TextMenu(names);
+		
+		int selection = 0;
+		newScreen("WiFi");
+		selection = menu.select(selection);
+		if(selection >= 0)
+		{
+			NetUtils.connectAP(names[selection]);
+		 	selection = -1;
+		}
+	}
+	
+	public void startNetworkServices()
+	{
+		System.out.println("Starting RMI");
+		String rmiIP = (wlanAddress != null ? wlanAddress : (panAddress != null ? panAddress : "127.0.0.1"));
+		System.out.println("Setting java.rmi.server.hostname to " + rmiIP);
+		System.setProperty("java.rmi.server.hostname", rmiIP);
+		
+		try
+		{
+			LocateRegistry.createRegistry(1099); 
+			System.out.println("java RMI registry created.");
+			RMIRemoteEV3 ev3 = new RMIRemoteEV3();
+			Naming.rebind("//localhost/RemoteEV3", ev3);
+			RMIRemoteMenu remoteMenu = new RMIRemoteMenu(self);
+			Naming.rebind("//localhost/RemoteMenu", remoteMenu);
+			
+			String dt = SNTPClient.getDate(Settings.getProperty(ntpProperty, "1.uk.pool.ntp.org"));
+			System.out.println("Date and time is " + dt);
+			Runtime.getRuntime().exec("date -s " + dt);
+		}
+		catch (Exception e)
+		{
+			System.err.println("RMI failed to start: " + e);
+		}
+	}
+	
+	private void execInThisJVM(File jar)
+	{
+		suspend();
+		try
+		{
+			LCD.clearDisplay();
+			JarMain m = new JarMain(jar);
+			m.run();
+			m.close();
+		}
+		catch(Exception e)
+		{
+			toolException(e);
+			System.err.println("Exception in execution of tool: " + e);
+			e.printStackTrace();
+		}
+		finally
+		{
+			resume();
+		}
+	}
+	
+	private void exit_command(String message, String cmdline)
+	{
+		try
+		{
+			this.suspend();
+			ProcessBuilder proc = new ProcessBuilder(cmdline).inheritIO();
+			lcd.drawString(message, 2, 6);
+			lcd.refresh();
+			proc.start();
+			System.exit(0);
+		}
+		catch(Exception e)
+		{
+			System.err.println("Error when restarting menu");
+			e.printStackTrace();
+		}
+	}
+	
+	private void stopMenu()
+	{
+		System.out.println("Menu finished");
+		System.gc();
+		
+		switch(this.exit)
+		{
+		case 1:
+			System.exit(0);
+			break;
+		case 2:
+			this.exit_command("Restarting", "/home/root/lejos/bin/startmenu");
+			break;
+		case 3:
+			this.exit_command("Shutting down", "init 0");
+			break;
+		case 4:
+			this.exit_command("Reboot", "init 6");
+			break;
+		default:
+			break;
+		}
+	}
+	
+	//						//
+	//	UNTAMPERED SECTION 	//
+	//						//
+	
+	/**
+	 * If the menu is suspended wait for it to be resumed. Handle any program exit
+	 * while we wait.
+	 */
+	public void waitResume()
+	{
+		while (suspend) {
+			if (program != null && !echoIn.isAlive() && !echoErr.isAlive()) {
+				stopProgram();
+				break;
+			}
+			int b = Button.getButtons(); 
+			if (b == 6) {
+				if (program != null)
+					stopProgram();
+				else
+					// should we do this?
+					resume();
+				break;
+			}
+			Delay.msDelay(200);
+		}		
+	}
+	
+	protected void startNetwork(String startup, boolean startServices) {
+		try {
+			Process p = Runtime.getRuntime().exec(startup);
+			BufferedReader input = new BufferedReader(new InputStreamReader(p.getInputStream()));
+			String statusMsg;
+			while((statusMsg = input.readLine()) != null)
+			{
+				waitScreen.status(statusMsg);
+			}
+			int status = p.waitFor();
+			System.out.println("start returned " + status);
+			updateIPAddresses();
+			Delay.msDelay(2000);
+			if (startServices)
+			{
+				waitScreen.status("Start services");
+				startNetworkServices();
+				Delay.msDelay(2000);
+			}
+		} catch (Exception e) {
+			System.err.println("Failed to execute: " + startup + " : " + e);
+			e.printStackTrace();
+		
+		}
+	}
+	
+	private void toolException(Throwable t) {
+		Sound.buzz();
+		TextLCD lcd = BrickFinder.getDefault().getTextLCD(Font.getSmallFont());
+		int offset = 0;
+		// Get rid of invocation exception
+		if (t.getCause() != null) t = t.getCause();
+		while (true)
+		{
+			lcd.clear();
+			lcd.drawString("Tool exception:", offset, 1);
+			lcd.drawString(t.getClass().getName(), offset, 3);
+			if (t.getMessage() != null) lcd.drawString(t.getMessage(), offset, 4);		
+			
+			if (t.getCause() != null) {
+				lcd.drawString("Caused by:", offset, 5);
+				lcd.drawString(t.getCause().toString(), offset, 6);
+			}
+			
+			StackTraceElement[] trace = t.getStackTrace();
+			for(int i=0;i<7 && i < trace.length ;i++) lcd.drawString(trace[i].toString(), offset, 8+i);
+			
+			lcd.refresh();
+			int id = Button.waitForAnyEvent();
+			if (id == Button.ID_ESCAPE) break;
+			if (id == Button.ID_LEFT) offset += 5;
+			if (id == Button.ID_RIGHT)offset -= 5;
+			if (offset > 0) offset = 0;
+		}
+		lcd.clear();
+	}
+	
+	public static void resetMotors() {
+		for(String portName: new String[]{"A","B","C","D"}) {
+			Port p = LocalEV3.get().getPort(portName);
+			TachoMotorPort mp = p.open(TachoMotorPort.class);
+			mp.controlMotor(0, TachoMotorPort.FLOAT);
+			mp.resetTachoCount();
+			mp.close();
+		}
+	}
+	
+	//						//
+	//	OVERRIDE SECTION 	//
+	//						//
+	
+	@Override
+	public void stopProgram()
+	{		   
+		try
+		{  
+			if(program == null) return;
+			program.destroy();
+			program.waitFor();
+			System.out.println("Program finished");
+		}
+		catch(Exception e)
+		{
+			System.err.println("Failed to stop program: " + e);
+		}
+		finally
+		{
+			Button.LEDPattern(0);
+			program = null;
+			self.resume();			  
+		}
+	}
+	
+	@Override
+	public String getExecutingProgramName()
+	{
+		if (program == null) return null;
+		return programName;
 	}
 	
 	@Override
@@ -1245,54 +1433,6 @@ public class MainMenu implements Menu {
 	
 	}
 	
-	private void wifiMenu()
-	{
-		System.out.println("Finding access points ...");
-		LocalWifiDevice wifi = Wifi.getLocalDevice("wlan0");
-		String[] names;
-		try
-		{
-			names = wifi.getAccessPointNames();
-		}
-		catch(Exception e)
-		{
-			System.err.println("Exception getting access points: " + e);
-			msg("No Access Points found");
-			return;
-		}
-		for(int i = 0; i < names.length; i++)
-		{
-			if(names[i].isEmpty())
-			{
-				names[i] = "[HIDDEN]";
-			}
-		}
-		ListMenu menu = new ListMenu(names);
-		
-		int selection = 0;
-		newScreen("WiFi");
-		selection = menu.getSelection(selection);
-		if(selection >= 0)
-		{
-			NetUtils.connectAP(names[selection]);
-		 	selection = -1;
-		}
-	}
-	
-	/**
-	 * Reset all motors to zero power and float state
-	 * and reset tacho counts
-	 */
-	public static void resetMotors() {
-		for(String portName: new String[]{"A","B","C","D"}) {
-			Port p = LocalEV3.get().getPort(portName);
-			TachoMotorPort mp = p.open(TachoMotorPort.class);
-			mp.controlMotor(0, TachoMotorPort.FLOAT);
-			mp.resetTachoCount();
-			mp.close();
-		}
-	}
-
 	@Override
 	public byte[] fetchFile(String fileName) {
 		File f = new File(fileName);
@@ -1372,112 +1512,6 @@ public class MainMenu implements Menu {
 		waitScreen.end();
 	}
 	
-	public void startNetworkServices()
-	{
-		System.out.println("Starting RMI");
-		String rmiIP = (wlanAddress != null ? wlanAddress : (panAddress != null ? panAddress : "127.0.0.1"));
-		System.out.println("Setting java.rmi.server.hostname to " + rmiIP);
-		System.setProperty("java.rmi.server.hostname", rmiIP);
-		
-		try
-		{
-			LocateRegistry.createRegistry(1099); 
-			System.out.println("java RMI registry created.");
-			RMIRemoteEV3 ev3 = new RMIRemoteEV3();
-			Naming.rebind("//localhost/RemoteEV3", ev3);
-			RMIRemoteMenu remoteMenu = new RMIRemoteMenu(self);
-			Naming.rebind("//localhost/RemoteMenu", remoteMenu);
-		}
-		catch (Exception e)
-		{
-			System.err.println("RMI failed to start: " + e);
-		}
-		
-		//String dt = SntpClient.getDate(Settings.getProperty(ntpProperty, "1.uk.pool.ntp.org"));
-		//System.out.println("Date and time is " + dt);
-		//Runtime.getRuntime().exec("date -s " + dt);
-	}
-	
-	
-	protected void startNetwork(String startup, boolean startServices) {
-		try {
-			Process p = Runtime.getRuntime().exec(startup);
-			BufferedReader input = new BufferedReader(new InputStreamReader(p.getInputStream()));
-			String statusMsg;
-			while((statusMsg = input.readLine()) != null)
-			{
-				waitScreen.status(statusMsg);
-			}
-			int status = p.waitFor();
-			System.out.println("start returned " + status);
-			updateIPAddresses();
-			Delay.msDelay(2000);
-			if (startServices)
-			{
-				waitScreen.status("Start services");
-				startNetworkServices();
-				Delay.msDelay(2000);
-			}
-		} catch (Exception e) {
-			System.err.println("Failed to execute: " + startup + " : " + e);
-			e.printStackTrace();
-		
-		}
-	}
-	
-	private void execInThisJVM(File jar)
-	{
-		suspend();
-		try
-		{
-			LCD.clearDisplay();
-			JarMain m = new JarMain(jar);
-			m.run();
-			m.close();
-		}
-		catch(Exception e)
-		{
-			toolException(e);
-			System.err.println("Exception in execution of tool: " + e);
-			e.printStackTrace();
-		}
-		finally
-		{
-			resume();
-		}
-	}
-	
-	private void toolException(Throwable t) {
-		Sound.buzz();
-		TextLCD lcd = BrickFinder.getDefault().getTextLCD(Font.getSmallFont());
-		int offset = 0;
-		// Get rid of invocation exception
-		if (t.getCause() != null) t = t.getCause();
-		while (true)
-		{
-			lcd.clear();
-			lcd.drawString("Tool exception:", offset, 1);
-			lcd.drawString(t.getClass().getName(), offset, 3);
-			if (t.getMessage() != null) lcd.drawString(t.getMessage(), offset, 4);		
-			
-			if (t.getCause() != null) {
-				lcd.drawString("Caused by:", offset, 5);
-				lcd.drawString(t.getCause().toString(), offset, 6);
-			}
-			
-			StackTraceElement[] trace = t.getStackTrace();
-			for(int i=0;i<7 && i < trace.length ;i++) lcd.drawString(trace[i].toString(), offset, 8+i);
-			
-			lcd.refresh();
-			int id = Button.waitForAnyEvent();
-			if (id == Button.ID_ESCAPE) break;
-			if (id == Button.ID_LEFT) offset += 5;
-			if (id == Button.ID_RIGHT)offset -= 5;
-			if (offset > 0) offset = 0;
-		}
-		lcd.clear();
-	}
-
 	@Override
 	public void suspend() {
 		suspend = true;
@@ -1485,7 +1519,6 @@ public class MainMenu implements Menu {
 		lcd.clear();
 		LCD.setAutoRefresh(false);
 		lcd.refresh();
-		curMenu.quit();
 	}
 
 	@Override
@@ -1497,56 +1530,29 @@ public class MainMenu implements Menu {
 		suspend = false;
 	}
 	
+	@Override
+	public void shutdown()
+	{
+		this.exit = 3; //Set the exit state so the addons can be safely cleaned.
+	}
+	
+	//				//
+	//	DEPRECATED	//
+	//				//
+
+	@Deprecated
 	public boolean isSuspended()
 	{
 		return MainMenu.suspend;
 	}
 	
-	private void stopMenu()
-	{
-		System.out.println("Menu finished");
-		System.gc();
-		System.exit(0);
-	}
+	@Deprecated
+	public void setCurrentMenu(GraphicMenu menu) {}
 	
-	/**
-	 * Shut down the EV3
-	 */
-	@Override
-	public void shutdown()
+	@Deprecated
+	protected String getRunningName()
 	{
-		this.suspend();
-		try
-		{
-			Runtime.getRuntime().exec("init 0");
-		}
-		catch (IOException e){}
-		lcd.drawString("  Shutting down", 0, 6);
-		lcd.refresh();
-		System.exit(0);
-	}
-	
-	public void setMenuExit(boolean t)
-	{
-		this.shouldExit = t ? 1 : 0;
-	}
-
-	/**
-	 * Restarts the menu system.
-	 */
-	public void restart()
-	{
-		try
-		{
-			ProcessBuilder b = new ProcessBuilder("/home/root/lejos/bin/startmenu").inheritIO();
-			b.start();
-			this.stopMenu();
-		}
-		catch(Exception e)
-		{
-			System.err.println("Error when restarting menu");
-			e.printStackTrace();
-		}
+		return programName;
 	}
 	
 }

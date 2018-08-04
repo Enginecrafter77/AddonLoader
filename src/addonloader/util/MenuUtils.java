@@ -7,12 +7,12 @@ import java.util.Iterator;
 import addonloader.menu.MappedMenu;
 import addonloader.menu.MenuEntry;
 import addonloader.menu.SubmenuEntry;
+import addonloader.util.ui.Icon;
 import addonloader.util.xml.XElement;
-import lejos.GraphicMenu;
 import lejos.MainMenu;
 import lejos.Utils;
 import lejos.hardware.Button;
-import lejos.hardware.lcd.Image;
+import lejos.hardware.lcd.LCD;
 
 /**
  * Class used to store random static functions used wherever in the code to keep the code clean.
@@ -86,10 +86,11 @@ public class MenuUtils {
 	 * @param def A default selection.
 	 * @return True if pressed yes.
 	 */
-	public static boolean askConfirm(String prompt, boolean def)
+	public static boolean askConfirm(String prompt)
 	{
-		GraphicMenu menu = new GraphicMenu(new String[]{"No", "Yes"}, new Image[]{StockIcon.YES.call(), StockIcon.NO.call()}, 4, prompt, 3);
-		return menu.getSelection(def ? 1 : 0) == 1;
+		MappedMenu menu = new MappedMenu("Confirm", new String[]{"No", "Yes"}, new Icon[]{StockIcon.YES, StockIcon.NO});
+		LCD.drawString(prompt, 1, 2);
+		return menu.open() == 1;
 	}
 	
 	/**

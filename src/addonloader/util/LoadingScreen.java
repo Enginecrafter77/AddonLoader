@@ -1,7 +1,6 @@
-package addonloader.menu;
+package addonloader.util;
 
 
-import addonloader.util.MenuUtils;
 import lejos.Utils;
 import lejos.hardware.ev3.LocalEV3;
 import lejos.hardware.lcd.GraphicsLCD;

@@ -17,7 +17,7 @@ public class Reference
      * 
      * For example, 140 = 1.4.0; 1455 = 14.5.5</p>
      */
-    public static final int API_LEVEL = 71;
+    public static final int API_LEVEL = 85;
     
 	public static final int ANIMATION_DELAY = 250;
 	public static final int ACTIVITY_TIMEOUT = 1000;

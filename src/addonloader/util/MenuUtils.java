@@ -1,9 +1,13 @@
 package addonloader.util;
 
 import java.io.File;
+import java.io.IOException;
+import java.util.Iterator;
 
-import addonloader.lib.DataSize;
-import addonloader.lib.Icon;
+import addonloader.menu.MappedMenu;
+import addonloader.menu.MenuEntry;
+import addonloader.menu.SubmenuEntry;
+import addonloader.util.xml.XElement;
 import lejos.GraphicMenu;
 import lejos.MainMenu;
 import lejos.Utils;
@@ -65,25 +69,13 @@ public class MenuUtils {
 	{
 		if(forward)
 		{
-			if(num < max)
-			{
-				num++;
-			}
-			else
-			{
-				num = min;
-			}
+			if(num < max) num++;
+			else num = min;
 		}
 		else
 		{
-			if(num > min)
-			{
-				num--;
-			}
-			else
-			{
-				num = max;
-			}
+			if(num > min) num--;
+			else num = max;
 		}
 		return num;
 	}
@@ -96,7 +88,7 @@ public class MenuUtils {
 	 */
 	public static boolean askConfirm(String prompt, boolean def)
 	{
-		GraphicMenu menu = new GraphicMenu(new String[]{"No", "Yes"}, new Image[]{Icon.YES.loadIcon(), Icon.NO.loadIcon()}, 4, prompt, 3);
+		GraphicMenu menu = new GraphicMenu(new String[]{"No", "Yes"}, new Image[]{StockIcon.YES.call(), StockIcon.NO.call()}, 4, prompt, 3);
 		return menu.getSelection(def ? 1 : 0) == 1;
 	}
 	
@@ -173,6 +165,23 @@ public class MenuUtils {
 		else
 		{
 			return null;
+		}
+	}
+	
+	public void generateFromXML(MappedMenu parent, XElement source) throws NoSuchFieldException, ClassNotFoundException, InstantiationException, IllegalAccessException, IOException
+	{
+		if(source.name.equals("menu"))
+		{
+			SubmenuEntry current = new SubmenuEntry(source.getValue("name"), StockIcon.valueOf(source.getValue("icon")));
+			parent.add(current);
+			Iterator<XElement> itr = source.children.iterator();
+			while(itr.hasNext()) generateFromXML(current, itr.next());
+		}
+		else
+		{
+			Class<?> cls = MainMenu.class.getClassLoader().loadClass(source.getValue("class"));
+			if(!MenuEntry.class.isAssignableFrom(cls)) throw new ClassNotFoundException("Provided class " + cls.getCanonicalName() + " does not extend MenuEntry");
+			parent.add((MenuEntry)cls.newInstance());
 		}
 	}
 	

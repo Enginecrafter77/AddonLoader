@@ -7,6 +7,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
+import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintStream;
@@ -22,13 +23,18 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.jar.JarFile;
 
-import addonloader.lib.DataSize;
-import addonloader.main.*;
-import addonloader.menu.LoadingScreen;
+import addonloader.main.AddonLoader;
+import addonloader.main.LoadingStage;
 import addonloader.menu.MappedMenu;
-import addonloader.util.InputMethod;
-import addonloader.util.Installer;
+import addonloader.menu.HookRegistry;
+import addonloader.menu.InputMethod;
+import addonloader.menu.LoadingScreen;
+import addonloader.menu.SimpleMenuEntry;
+import addonloader.util.DataSize;
+import addonloader.util.Icon;
 import addonloader.util.MenuUtils;
+import addonloader.util.StockIcon;
+import addonloader.util.Viewer;
 import lejos.utility.Delay;
 import lejos.ListMenu;
 import lejos.Utils;
@@ -61,10 +67,11 @@ public class MainMenu implements Menu {
 	
 	public static List<String> ips = new ArrayList<String>();
 	public static String hostname, panAddress, wlanAddress;
+	public static AddonLoader addon_loader;
 	public static MainMenu self;
 	public static TextLCD lcd;
+	public static Viewer default_viewer;
 	
-	public static AddonLoader addon_loader;
 	private static String lejosversion, menuversion;
 	private static GraphicMenu curMenu;
 	private static LocalBTDevice bt;
@@ -73,15 +80,14 @@ public class MainMenu implements Menu {
 	private static EchoThread echoIn, echoErr;
 	private static boolean suspend = false;
 	
+	public int timeout;
+	public PANConfig panConfig;
 	protected IndicatorThread ind;
-	protected InfoBar indiBA = new InfoBar("EV3");
-	protected RConsole rcons = new RConsole();
-	protected RemoteMenuThread remoteMenuThread = new RemoteMenuThread();
+	protected InfoBar indiBA;
+	protected RConsole rcons;
+	protected RemoteMenuThread remoteMenuThread;
 	private WaitScreen waitScreen;
-	public PANConfig panConfig = new PANConfig();
-	public int timeout = 0;
-	/** 0 = no exitting; 1 = exit; 2 = exit & shutdown*/
-	private int shouldExit;
+	private int shouldExit; // 0 = no exitting; 1 = exit; 2 = exit & shutdown
 	
 	public MainMenu()
 	{
@@ -97,45 +103,44 @@ public class MainMenu implements Menu {
 	
 	public static void main(String[] args) throws Exception
 	{
-		Installer.checkInstall(Reference.LEJOS_HOME); //Checks the system files
-		System.setOut(new PrintStream("/var/volatile/log/menu.log"));
-		System.setErr(System.out);
 		LoadingScreen loading = new LoadingScreen();
 		loading.start("AddonLoader");
-		loading.setState("Booting", 10);
+		loading.setState("Starting up...", 10);
 		File bootLock = new File("/var/run/bootlock");
 		while(bootLock.exists()) Delay.msDelay(500); //Wait until fully booted
 		LocalEV3.get().getLED().setPattern(1); //Set pattern to green
+		
 		loading.setState("Init Menu", 20);
-		hostname = args.length > 0 ? args[0] : "EV3";
-		lejosversion = args.length > 1 ? args[1] : "UNKNOWN";
-		menuversion = "AF-" + MenuUtils.formatVersion(Reference.API_LEVEL, 3); //Sets the menu version
-		lcd = LocalEV3.get().getTextLCD();
-		self = new MainMenu();
-		addon_loader = new AddonLoader(Reference.LEJOS_HOME + "/config/addons.conf");
-		loading.setState("Init AL", 25);
-		addon_loader.loadAddons();
+		System.setOut(new PrintStream("/var/volatile/log/menu.log"));
+		System.setErr(System.out);
 		Thread.setDefaultUncaughtExceptionHandler(new ExceptionHandler());
-		WaitScreen.init();
 		InputMethod.current = new DefaultKeyboard();
+		WaitScreen.init();
+		MainMenu.default_viewer = new Viewer(Font.getSmallFont());
+		MainMenu.addon_loader = new AddonLoader(Reference.LEJOS_HOME + "/config/addons.conf");
+		MainMenu.lejosversion = args.length > 1 ? args[1] : "UNKNOWN";
+		MainMenu.menuversion = "AF-" + MenuUtils.formatVersion(Reference.API_LEVEL, 3); //Sets the menu version
+		MainMenu.hostname = args.length > 0 ? args[0] : "EV3";
+		MainMenu.bt = Bluetooth.getLocalDevice();
+		MainMenu.lcd = LocalEV3.get().getTextLCD();
+		MainMenu.self = new MainMenu();
+		MainMenu.init_menus();
+		loading.setState("Load JAR files", 25);
+		addon_loader.loadAddons();
 		loading.setState("Init addons", 35);
-		addon_loader.processStage(LoadingStage.INIT);
+		LoadingStage.INIT.proccess(addon_loader.addons);
 		loading.setState("Load addons", 55);
-		addon_loader.processStage(LoadingStage.LOAD);
-		loading.setState("Clean up", 60);
-		addon_loader.processStage(LoadingStage.FINISH);
+		LoadingStage.LOAD.proccess(addon_loader.addons);
 		loading.setState("Start Network", 65);
 		self.updateIPAddresses();
 		loading.addProgress(10);
-		bt = Bluetooth.getLocalDevice();
-		loading.addProgress(10);
 		self.startNetworkServices();
-		loading.addProgress(10);
+		loading.addProgress(20);
 		self.startDaemons();
-		
+		//Try to play tune
 		tryAutorun();
 		new TuneThread().start();
-		
+		//Main section
 		System.out.println("Host name: " + hostname);
 		System.out.println("LeJOS version: " + lejosversion);
 		System.out.println("Menu version: " + menuversion);
@@ -143,7 +148,46 @@ public class MainMenu implements Menu {
 		LocalEV3.get().getLED().setPattern(0);
 		loading.stop();
 		self.mainMenu();
+		
+		System.out.println("Cleaning up addons...");
+		LoadingStage.CLEANUP.proccess(addon_loader.addons);
 		self.stopMenu();
+	}
+	
+	private static void init_menus()
+	{
+		try
+		{
+			MappedMenu.root = new MappedMenu(new String[]{"Run Default", "Programs", "Samples", "Tools", "Bluetooth", "Wifi", "PAN", "Sound", "System", "Version"}, new Icon[]{StockIcon.DEFAULT,StockIcon.PROGRAMS,StockIcon.SAMPLES,StockIcon.TOOLS,StockIcon.BLUETOOTH,StockIcon.WIFI,StockIcon.NETWORK,StockIcon.SOUND,StockIcon.EV3BRICK,StockIcon.LEJOS});
+			MappedMenu.system = new MappedMenu(new String[]{"Delete Programs", "Auto Run", "Change Name", "NTP", "Suspend Menu", "Close IO", "Unset Default"}, new Icon[]{StockIcon.FORMAT,StockIcon.AUTORUN,StockIcon.EDIT,StockIcon.JAVA,StockIcon.SLEEP,StockIcon.NO,StockIcon.JAVA});
+			MappedMenu.sound = new MappedMenu(new String[]{"", "", "", ""}, new Icon[]{StockIcon.SOUND, StockIcon.SOUND, StockIcon.SOUND, StockIcon.SOUND});
+			MappedMenu.bluetooth = new MappedMenu(new String[]{"Search/Pair", "Devices", "Visibility", "Change PIN", "Information"}, new Icon[]{StockIcon.SEARCH, StockIcon.EV3BRICK, StockIcon.EYE, StockIcon.KEY, StockIcon.INFO});
+			MappedMenu.file = new MappedMenu(new String[]{"View", "Delete"},new Icon[]{StockIcon.DIRECTORY, StockIcon.DELETE});
+			MappedMenu.executable = new MappedMenu(new String[]{"Run", "Debug", "Set as Default", "Delete"},new Icon[]{StockIcon.JAVA, StockIcon.DEBUG, StockIcon.JAVA, StockIcon.DELETE});
+			MappedMenu.bluetooth_dev = new MappedMenu(new String[]{"Remove"}, new Icon[]{StockIcon.DELETE});
+			MappedMenu.boot_menu = new MappedMenu(new String[]{"Shutdown", "Cancel"}, new Icon[]{StockIcon.POWER, StockIcon.NO});
+			
+			if(!Boolean.parseBoolean(MainMenu.addon_loader.props.getProperty("enabled", "true")))
+			{
+				MappedMenu.system.add(new SimpleMenuEntry("Enable AL", StockIcon.TOOLS){
+					@Override
+					public void run()
+					{
+						if(MenuUtils.askConfirm("Enable Addon Loader?", false))
+						{
+							MainMenu.addon_loader.props.setProperty("enabled", "true");
+							MainMenu.addon_loader.props.store("AddonLoader config");
+							MainMenu.self.restart();
+						}
+					}
+				});
+			}
+		}
+		catch(IOException exc)
+		{
+			System.err.println("[FATAL] I/O Exception occured whilst loading icon from database.");
+			exc.printStackTrace();
+		}
 	}
 	
 	private static void tryAutorun()
@@ -188,7 +232,7 @@ public class MainMenu implements Menu {
 	private void mainMenu()
 	{
 		//DEBUGME MainMenu
-		MappedMenu menu = DefaultMenus.menu;
+		MappedMenu menu = MappedMenu.root;
 		int selection = 0;
 		while(true)
 		{
@@ -265,7 +309,7 @@ public class MainMenu implements Menu {
 			return;
 		}
 		
-		MappedMenu menu = DefaultMenus.bluetooth;
+		MappedMenu menu = MappedMenu.bluetooth;
 		int selection = 0;
 		while(selection >= 0)
 		{
@@ -421,7 +465,7 @@ public class MainMenu implements Menu {
 		}
 
 		ListMenu deviceMenu = new ListMenu(names);
-		MappedMenu subMenu = DefaultMenus.bluetooth_dev;
+		MappedMenu subMenu = MappedMenu.bluetooth_dev;
 		int selection = 0;
 		while(selection >= 0)
 		{
@@ -512,7 +556,7 @@ public class MainMenu implements Menu {
 	 */
 	private void systemMenu()
 	{
-		MappedMenu menu = DefaultMenus.system;
+		MappedMenu menu = MappedMenu.system;
 		int selection = 0;
 		while(selection >= 0)
 		{
@@ -532,14 +576,14 @@ public class MainMenu implements Menu {
 				systemAutoRun();
 				break;
 			case 2:
-				String newName = InputMethod.current.getString();
+				String newName = InputMethod.current.call();
 				if(newName != null)
 				{
 					setName(newName);
 				}
 				break;
 			case 3:
-				String host = InputMethod.current.getString();
+				String host = InputMethod.current.call();
 				if(host != null)
 				{
 					Settings.setProperty(ntpProperty, host);
@@ -599,7 +643,7 @@ public class MainMenu implements Menu {
 	
 	private void bootMenu()
 	{
-		MappedMenu menu = DefaultMenus.boot_menu;
+		MappedMenu menu = MappedMenu.boot_menu;
 		int selection = menu.getSelection(1);
 		switch(selection)
 		{
@@ -640,7 +684,7 @@ public class MainMenu implements Menu {
 	 */
 	private void soundMenu()
 	{
-		MappedMenu menu = DefaultMenus.sound;
+		MappedMenu menu = MappedMenu.sound;
 		String[] res = menu.getItems();
 		int selection = 0;
 		int mv = Integer.parseInt(Settings.getProperty(Sound.VOL_SETTING, "0"));
@@ -693,16 +737,15 @@ public class MainMenu implements Menu {
 	 */
 	private void displayVersion()
 	{
+		if(HookRegistry.DISPLAY_VERISON.runHooks(0) > 0) return;
+		HookRegistry.DISPLAY_VERISON.runHooks(1);
 		newScreen("Version");
-		if(ActionRegistry.DISPLAY_VERISON.runMethodsB())
-		{
-			lcd.drawString("leJOS:", 0, 2);
-			lcd.drawString(lejosversion, 6, 2);
-			lcd.drawString("Menu:", 0, 3);
-			lcd.drawString(menuversion, 6, 3);
-			getButtonPress();
-		}
-		ActionRegistry.DISPLAY_VERISON.runMethodsA();
+		lcd.drawString("leJOS:", 0, 2);
+		lcd.drawString(lejosversion, 6, 2);
+		lcd.drawString("Menu:", 0, 3);
+		lcd.drawString(menuversion, 6, 3);
+		getButtonPress();
+		HookRegistry.DISPLAY_VERISON.runHooks(2);
 	}
 	
 	/**
@@ -732,13 +775,13 @@ public class MainMenu implements Menu {
 	 */
 	private void fileMenu(File file, boolean tools)
 	{
-		MappedMenu menu = DefaultMenus.file;
+		MappedMenu menu = MappedMenu.file;
 		String extension = Utils.getExtension(file.getName());
 		newScreen(file.getName());
 		LCD.drawString("Size: " + DataSize.formatDataSize(file.length(), DataSize.BYTE), 1, 2);
 		if(extension.equals("jar"))
 		{
-			menu = DefaultMenus.executable;
+			menu = MappedMenu.executable;
 			executableMenu(file, tools, menu);
 			return;
 		}
@@ -759,11 +802,11 @@ public class MainMenu implements Menu {
 			{
 				try
 				{
-					Viewer.view(file.getPath());
+					default_viewer.open(new FileReader(file.getPath()));
 				}
 				catch(IOException e)
 				{
-					System.err.println("Exception viewing file");
+					System.err.println("Exception loading file");
 				}
 			}
 			break;
@@ -791,29 +834,27 @@ public class MainMenu implements Menu {
 			System.out.println("Running program: " + file.getPath());
 			if(isTool)
 			{
-				if(ActionRegistry.RUN_TOOL.runMethodsB())
-				{
-					execInThisJVM(file);
-				}
-				ActionRegistry.RUN_TOOL.runMethodsA();
+				if(HookRegistry.RUN_TOOL.runHooks(0) > 0) return;
+				HookRegistry.RUN_TOOL.runHooks(1);
+				execInThisJVM(file);
+				HookRegistry.RUN_TOOL.runHooks(2);
 			}
 			else
 			{
-				if(ActionRegistry.RUN_PROG.runMethodsB())
+				if(HookRegistry.RUN_PROG.runHooks(0) > 0) return;
+				HookRegistry.RUN_PROG.runHooks(1);
+				try
 				{
-					try
-					{
-						JarFile jar = new JarFile(file);
-						String mainClass = jar.getManifest().getMainAttributes().getValue("Main-class");
-						jar.close();
-						exec(file, JAVA_RUN_CP + file.getPath() + " lejos.internal.ev3.EV3Wrapper " + mainClass, directory);
-					}
-					catch(IOException e)
-					{
-						System.err.println("Exception running program");
-					}
+					JarFile jar = new JarFile(file);
+					String mainClass = jar.getManifest().getMainAttributes().getValue("Main-class");
+					jar.close();
+					exec(file, JAVA_RUN_CP + file.getPath() + " lejos.internal.ev3.EV3Wrapper " + mainClass, directory);
 				}
-				ActionRegistry.RUN_PROG.runMethodsA();
+				catch(IOException e)
+				{
+					System.err.println("Exception running program");
+				}
+				HookRegistry.RUN_PROG.runHooks(2);
 			}
 			break;
 		case 1:
@@ -906,35 +947,34 @@ public class MainMenu implements Menu {
 	 */
 	private static void startProgram(String command, File jar)
 	{
-		if(ActionRegistry.RUN_PROG.runMethodsB())
+		if(HookRegistry.RUN_PROG.runHooks(0) > 0) return;
+		HookRegistry.RUN_PROG.runHooks(1);
+		try
 		{
-			try
-			{
-				if(program != null) return;
-				String[] args = command.split(" ");
-				File directory = jar.getParentFile();
-				
-				programName = jar.getName().replace(".jar", "");
-				
-				program = new ProcessBuilder(args).directory(directory).start();
-				echoIn = new EchoThread(jar.getPath().replace(".jar",".out"), new BufferedReader(new InputStreamReader(program.getInputStream())), System.out);
-				echoErr = new EchoThread(jar.getPath().replace(".jar",".err"), new BufferedReader(new InputStreamReader(program.getErrorStream())), System.err);
-				
-				echoIn.start();
-				echoErr.start();
-				self.suspend();
-				WaitScreen.drawLaunchScreen();		  
-				
-				System.out.println("Executing " + command + " in " + directory);
-			}
-			catch(Exception e)
-			{
-				System.err.println("Failed to start program: " + e);
-				e.printStackTrace();
-				self.resume();
-			}
+			if(program != null) return;
+			String[] args = command.split(" ");
+			File directory = jar.getParentFile();
+			
+			programName = jar.getName().replace(".jar", "");
+			
+			program = new ProcessBuilder(args).directory(directory).start();
+			echoIn = new EchoThread(jar.getPath().replace(".jar",".out"), new BufferedReader(new InputStreamReader(program.getInputStream())), System.out);
+			echoErr = new EchoThread(jar.getPath().replace(".jar",".err"), new BufferedReader(new InputStreamReader(program.getErrorStream())), System.err);
+			
+			echoIn.start();
+			echoErr.start();
+			self.suspend();
+			WaitScreen.drawLaunchScreen();		  
+			
+			System.out.println("Executing " + command + " in " + directory);
 		}
-		ActionRegistry.RUN_PROG.runMethodsA();
+		catch(Exception e)
+		{
+			System.err.println("Failed to start program: " + e);
+			e.printStackTrace();
+			self.resume();
+		}
+		HookRegistry.RUN_PROG.runHooks(2);
 	}
 	
 	@Override

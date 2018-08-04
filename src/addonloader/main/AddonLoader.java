@@ -3,7 +3,6 @@ package addonloader.main;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.lang.annotation.Annotation;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.ArrayList;
@@ -24,9 +23,9 @@ import lejos.Reference;
 public class AddonLoader {
 	
 	/** AddonLoader configuration. */
-	public ObjectSettings props;
+	public final ObjectSettings props;
 	/** List of all addons to be runned. */
-	private ArrayList<MenuAddon> addons = new ArrayList<MenuAddon>();
+	public final ArrayList<MenuAddon> addons;
 	
 	/**
 	 * Constructs AddonLoader instance with given configuration path. Can be used for debug.
@@ -37,7 +36,7 @@ public class AddonLoader {
 	public AddonLoader(String config) throws FileNotFoundException, IOException
 	{
 		props = new ObjectSettings(config);
-		DefaultMenus.mainRegistry();
+		addons = new ArrayList<MenuAddon>();
 	}
 	
 	/**
@@ -79,11 +78,10 @@ public class AddonLoader {
 	/**
 	 * Loads given file, supposing it is a JarFile.
 	 * @param file The file to scan for {@link MenuAddon} class.
-	 * @throws IOException When the filesystem or kernel fails, not my fault.
-	 * @throws ClassNotFoundException When there is no annotating file in given jar.
-	 * @throws IllegalAccessException IDK
+	 * @throws IOException When the filesystem or kernel fails, not our fault.
+	 * @throws ClassNotFoundException When there is no main class in given plugin.
 	 */
-	private void loadJar(File file) throws IOException, ClassNotFoundException, IllegalAccessException
+	private void loadJar(File file) throws IOException, ClassNotFoundException
 	{
 		JarFile jar = new JarFile(file);
 		Enumeration<JarEntry> en = jar.entries();
@@ -91,62 +89,46 @@ public class AddonLoader {
 		URLClassLoader loader = URLClassLoader.newInstance(new URL[]{new URL("jar:file:" + file.getAbsolutePath() + "!/")});
 		MenuAddon main = null;
 		
-		IterateLoop:
 		while(en.hasMoreElements())
 		{
 			JarEntry entry = en.nextElement();
-			if(entry.isDirectory() || !entry.getName().endsWith(".class"))
-			{
-				continue;
-			}
+			if(entry.isDirectory() || !entry.getName().endsWith(".class")) continue;
 			
-			String clsname = entry.getName().substring(0, entry.getName().length() - 6).replace('/', '.');
+			String clsname = entry.getName().substring(0, entry.getName().length() - 6).replace('/', '.'); //Replace FS-like path with java-like canonical.
 			try
 			{
-				Class<?> cur_class = loader.loadClass(clsname);
-			    if(MenuAddon.class.isAssignableFrom(cur_class))
-			    {
-			    	Annotation[] anr = cur_class.getAnnotations();
-			    	for(Annotation ann : anr)
-				    {
-				    	if(Addon.class.isAssignableFrom(ann.getClass()))
-				    	{
-				    		Addon adn = (Addon)ann;
-				    		if(adn.apilevel() < Reference.API_LEVEL)
-				    		{
-				    			throw new InstantiationException(adn.name() + " uses incompatible API level " + adn.apilevel());
-				    		}
-				    		main = (MenuAddon)cur_class.newInstance();
-				    		main.jarfile = file;
-				    		main.name = adn.name();
-				    		break IterateLoop;
-				    	}
-				    }
-			    }
+				Class<?> cur_class = loader.loadClass(clsname); //Load the currently unknown class.
+				if(MenuAddon.class.isAssignableFrom(cur_class)) //Check if it looks like Main class.
+				{
+					main = (MenuAddon)cur_class.newInstance();
+					main.jarfile = file;
+					if(main.apilevel < Reference.API_LEVEL) throw new InstantiationException(String.format("Addon %s uses incompatible API level (%d).", main.name, main.apilevel));
+				}
 			}
-			catch(NoClassDefFoundError e)
+			catch(NoClassDefFoundError exc) // This block allows the addon to handle classes that contain non-ev3-loadable code, such as java AWT, SWING, and other external libraries.
 			{
-				/* This try-catch block allows the addon to handle classes, that contain non-ev3-loadable code, like java AWT, SWING etc. */
-				System.err.println("[WARNING] " + file.getName() + " contains unloadable class " + clsname);
+				System.err.println(String.format("[ERROR] Class %s in %s refers to unloadable class. More info below.", clsname, file.getName()));
+				exc.printStackTrace();
 			}
-			catch(InstantiationException e)
+			catch(NoSuchMethodError exc) //If we encounter wrong constructor declaration (one that requires parameters) [Target line 104 newInstance()]
 			{
-				System.err.println("[ERR] " + e.getMessage());
+				System.err.println(String.format("[ERROR] Plugin %s has wrong constructor declaration in class %s. (Should be parameterless)", jar.getName(), clsname));
+			}
+			catch(IllegalAccessException exc) //If we encounter wrong constructor declaration (one that declares itself protected or private) [Target line 104 newInstance()]
+			{
+				System.err.println(String.format("[ERROR] Plugin %s has wrong constructor declaration in class %s. (Should be public)", jar.getName(), clsname));
+			}
+			catch(InstantiationException exc) //Triggered while encountering fatal error, like incompatible API.
+			{
+				System.err.println("[FATAL] " + exc.getMessage());
 				jar.close();
 				return;
 			}
-			catch(Exception e)
-			{
-				// These should not happed, if yes, warn.
-				e.printStackTrace();
-			}
 		}
-		if(main == null)
-		{
-			throw new ClassNotFoundException("Cannot find annotating class in file " + file.getName());
-		}
-		addons.add(main);
+		
 		jar.close();
+		if(main == null) throw new ClassNotFoundException("No suitable main class found in " + file.getName());
+		addons.add(main);
 	}
 	
 	/**
@@ -157,14 +139,5 @@ public class AddonLoader {
 		MenuAddon[] res = new MenuAddon[this.addons.size()];
 		res = this.addons.toArray(res);
 		return res;
-	}
-	
-	/**
-	 * Processes given {@link LoadingStage}
-	 * @param s The stage to be processed.
-	 */
-	public void processStage(LoadingStage s)
-	{
-		s.proccess(addons);
 	}
 }

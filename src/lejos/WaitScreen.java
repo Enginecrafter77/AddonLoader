@@ -1,6 +1,6 @@
 package lejos;
 
-import addonloader.lib.Icon;
+import addonloader.util.StockIcon;
 import lejos.hardware.ev3.LocalEV3;
 import lejos.hardware.lcd.Font;
 import lejos.hardware.lcd.GraphicsLCD;
@@ -10,13 +10,14 @@ import lejos.hardware.lcd.LCD;
 public class WaitScreen
 {
 	public static WaitScreen instance;
-	public static final Image hourglass = Icon.GEAR.loadIcon();
-	final GraphicsLCD g = LocalEV3.get().getGraphicsLCD();
-	final int scrWidth;
-	final int scrHeight;
-	final int chHeight;
-	final int basePos;
-	final int statusPos;
+	public static final Image hourglass = StockIcon.GEAR.call();
+	
+	private final GraphicsLCD g = LocalEV3.get().getGraphicsLCD();
+	private final int scrWidth;
+	private final int scrHeight;
+	private final int chHeight;
+	private final int basePos;
+	private final int statusPos;
 	
 	public WaitScreen()
 	{

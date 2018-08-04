@@ -1,4 +1,4 @@
-package addonloader.lib;
+package addonloader.util;
 
 /**
  * Classic binary prefix data size formatter

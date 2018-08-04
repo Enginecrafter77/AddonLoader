@@ -2,8 +2,6 @@ package addonloader.main;
 
 import java.util.ArrayList;
 
-import addonloader.lib.AddonException;
-
 /**
  * Enum representing single loading stage that will be run
  * by the addonloader using the function {@link #proccess(ArrayList)}
@@ -13,7 +11,7 @@ public enum LoadingStage {
 	
 	INIT, //The initializing stage
 	LOAD, //The loading stage
-	FINISH; //After that all completed, clean up.
+	CLEANUP; //After that all completed, clean up.
 	
 	/**
 	 * Processes stage on {@link MenuAddon} array.
@@ -35,8 +33,8 @@ public enum LoadingStage {
 				case LOAD:
 					m.load();
 					break;
-				case FINISH:
-					m.finish();
+				case CLEANUP:
+					m.cleanup();
 					break;
 				}
 			}

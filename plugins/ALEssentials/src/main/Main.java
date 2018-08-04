@@ -2,63 +2,56 @@ package main;
 
 import java.io.IOException;
 
-import addonloader.lib.Icon;
-import addonloader.main.Addon;
-import addonloader.main.AddonLoader;
 import addonloader.main.MenuAddon;
-import addonloader.main.MenuRegistry;
 import addonloader.menu.MappedMenu;
-import addonloader.menu.MenuEntry;
+import addonloader.menu.SimpleMenuEntry;
+import addonloader.menu.SubmenuEntry;
 import addonloader.util.MenuUtils;
+import addonloader.util.StockIcon;
 import lejos.MainMenu;
 
-@Addon(name = "ALEssential", apilevel = 53)
 public class Main extends MenuAddon {
 
-	public static MappedMenu advboot;
-	public static MenuEntry reboot;
-	public static MenuEntry restart;
-	public static MenuEntry exit;
-	public static MenuEntry disable;
+	public static SubmenuEntry advboot;
+	public static SimpleMenuEntry reboot;
+	public static SimpleMenuEntry restart;
+	public static SimpleMenuEntry exit;
+	public static SimpleMenuEntry disable;
 	public static InteractServer upd;
+	
+	public Main()
+	{
+		super(71, "AL-Essential");
+	}
 	
 	@Override
 	public void init()
 	{
 		upd = new InteractServer();
-		advboot = new MappedMenu().setParent(MenuRegistry.boot_menu);
-		disable = new MenuEntry("Disable AL", Icon.NO){
+		advboot = new SubmenuEntry("Advanced", StockIcon.EV3BRICK);
+		disable = new SimpleMenuEntry("Disable AL", StockIcon.NO){
 			@Override
 			public void run()
 			{
-				AddonLoader.instance.props.setProperty("enabled", String.valueOf(!MenuUtils.askConfirm("Disable Addon Loader?", false)));
-				AddonLoader.instance.props.store("AddonLoader config");
+				MainMenu.addon_loader.props.setProperty("enabled", String.valueOf(!MenuUtils.askConfirm("Disable Addon Loader?", false)));
+				MainMenu.addon_loader.props.store("AddonLoader config");
 			}
 		};
-		restart = new MenuEntry("Restart menu", Icon.REFRESH){
+		restart = new SimpleMenuEntry("Restart menu", StockIcon.REFRESH){
 			@Override
-			public void run()
-			{
-				MainMenu.self.restart();
-			}
+			public void run() {MainMenu.self.restart();}
 		};
-		exit = new MenuEntry("Exit menu", Icon.NO){
+		exit = new SimpleMenuEntry("Exit menu", StockIcon.NO){
 			@Override
-			public void run()
-			{
-				MainMenu.self.setMenuExit(true);
-			}
+			public void run() {MainMenu.self.setMenuExit(true);}
 		};
-		reboot = new MenuEntry("Reboot", Icon.REBOOT){
+		reboot = new SimpleMenuEntry("Reboot", StockIcon.REBOOT){
 			@Override
 			public void run()
 			{
 				MainMenu.self.setMenuExit(true);
 				MainMenu.self.suspend();
-				try
-				{
-					Runtime.getRuntime().exec("init 6");
-				}
+				try {Runtime.getRuntime().exec("init 6");}
 				catch(IOException e){}
 				MainMenu.lcd.drawString("Rebooting", 2, 6);
 				MainMenu.lcd.refresh();
@@ -69,14 +62,15 @@ public class Main extends MenuAddon {
 	@Override
 	public void load()
 	{
-		MenuRegistry.system.add(disable);
-		advboot.addToParent("Advanced", Icon.EV3BRICK);
+		upd.start();
 		advboot.add(reboot, restart, exit);
+		MappedMenu.system.add(disable);
+		MappedMenu.boot_menu.add(advboot);
 	}
 
 	@Override
-	public void finish()
+	public void cleanup()
 	{
-		upd.start();
+		upd.interrupt();
 	}
 }

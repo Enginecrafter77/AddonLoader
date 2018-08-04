@@ -1,13 +1,13 @@
 package addonloader.menu;
 
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 
-import addonloader.lib.ExtraCarrier;
-import addonloader.lib.Icon;
+import addonloader.util.ExtraCarrier;
+import addonloader.util.Icon;
 import lejos.GraphicMenu;
-import lejos.MainMenu;
 import lejos.hardware.lcd.Image;
 
 /**
@@ -20,12 +20,32 @@ import lejos.hardware.lcd.Image;
  * entries during runtime.
  * @author Enginecrafter77
  */
+//TODO Phase upt GraphicMenu in favor of custom-managed dynamic menu implementation.
 public class MappedMenu extends GraphicMenu implements ExtraCarrier<String>{
 	
-	/** List containing all the custom menu entires */
-	private final List<MenuEntry> custom_entries;
+	/* STATIC MENU DEFINITIONS */
+	/** The main menu */
+	public static MappedMenu root;
+	/** The system menu */
+	public static MappedMenu system;
+	/** The sound menu */
+	public static MappedMenu sound;
+	/** The bluetooth menu */
+	public static MappedMenu bluetooth;
+	/** The generic file menu */
+	public static MappedMenu file;
+	/** The executable file menu */
+	public static MappedMenu executable;
+	/** Menu for bluetooth device */
+	public static MappedMenu bluetooth_dev;
+	/** The menu displayed when pressing escape in main menu.*/
+	public static MappedMenu boot_menu;
+	/* STATIC MENU DEFINITIONS */
+	
 	/** The extra data you can pass to menu entry */
 	private String extra;
+	/** List containing all the custom menu entires */
+	protected final List<MenuEntry> custom_entries;
 	
 	/**
 	 * Constructs MappedMenu using list of default {@code items} and {@code icons} with the custom menu line.
@@ -55,9 +75,9 @@ public class MappedMenu extends GraphicMenu implements ExtraCarrier<String>{
 	 * @param items Default items to always display.
 	 * @param icons Icons for default items.
 	 */
-	public MappedMenu(String[] items, Icon[] icons)
+	public MappedMenu(String[] items, Icon[] icons) throws IOException
 	{
-		this(items, Icon.toImages(icons), 3);
+		this(items, Icon.loadIcons(icons), 3);
 	}
 	
 	/**
@@ -83,26 +103,6 @@ public class MappedMenu extends GraphicMenu implements ExtraCarrier<String>{
 	}
 	
 	/**
-	 * Automatically adds this MappedMenu as submenu to parent MappedMenu.
-	 * The parent is set in the constructor {@link #MappedMenu(String[], String[], int, MappedMenu)}
-	 * as the fourth parameter. This basically generates {@link MenuEntry} from {@code name} and {@code icon}
-	 * and makes the {@link MenuEntry#provideMenu()} return {@code this}.
-	 * If parent wasn't set, does nothing.
-	 * @param name The text to be displayed above the entry.
-	 * @param icon The icon to be displayed as the menu entry.
-	 */
-	public void addToParent(String name, Icon icon, MappedMenu parent)
-	{
-		parent.add(new MenuEntry(name, icon) {
-			@Override
-			public void run()
-			{
-				parent.openMenu();
-			}
-		});
-	}
-	
-	/**
 	 * Adds menu entries to this menu.
 	 * This method adds items to {@link #custom_entries registry}, and
 	 * expands the items and icons array.
@@ -116,21 +116,29 @@ public class MappedMenu extends GraphicMenu implements ExtraCarrier<String>{
 		Image[] icons = Arrays.copyOf(this.icons, size);
 		for(int index = 0; index < entries.length; index++)
 		{
-			items[last_index + index] = entries[index].name;
-			icons[last_index + index] = entries[index].icon.loadIcon();
+			try
+			{	//Try to load icon first, to avoid empty entry name insertion.
+				icons[last_index + index] = entries[index].getIcon().call();
+				items[last_index + index] = entries[index].getName();
+			}
+			catch(IOException exc)
+			{
+				System.err.println("[ERROR] I/O error while loading icon for " + entries[index].getName());
+				continue;
+			}
 			this.custom_entries.add(entries[index]);
 		}
 		this.setItems(items, icons);
 	}
 	
 	@Override
-	public void setExtra(String extra)
+	public void loadCarrier(String extra)
 	{
 		this.extra = extra;
 	}
 	
 	@Override
-	public String getExtra()
+	public String fetchCarrier()
 	{
 		return this.extra;
 	}
@@ -152,10 +160,7 @@ public class MappedMenu extends GraphicMenu implements ExtraCarrier<String>{
 	 */
 	public void onExternalAction(int selection)
 	{
-		if(selection >= 0)
-		{
-			this.getCustomEntry(selection).run();
-		}
+		if(selection >= 0) this.getCustomEntry(selection).run();
 	}
 	
 	/**
@@ -166,20 +171,6 @@ public class MappedMenu extends GraphicMenu implements ExtraCarrier<String>{
 	{
 		//Compute first the size occupied by default entries, and then removes the number from index.
 		return this.custom_entries.get(index - (this._items.length - this.custom_entries.size()));
-	}
-	
-	/**
-	 * Helper function to open the menu without writing too much code.
-	 */
-	public void openMenu()
-	{
-		int selection = 0;
-		while(selection > -1)
-		{
-			MainMenu.self.newScreen(this._title);
-			selection = this.getSelection(selection);
-			if(selection > -1) this.onExternalAction(selection);
-		}
 	}
 
 }

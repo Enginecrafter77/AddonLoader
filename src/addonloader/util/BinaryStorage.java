@@ -1,4 +1,4 @@
-package addonloader.lib;
+package addonloader.util;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;

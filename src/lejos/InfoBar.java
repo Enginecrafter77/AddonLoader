@@ -1,6 +1,6 @@
 package lejos;
 
-import addonloader.lib.Icon;
+import addonloader.util.StockIcon;
 import lejos.hardware.Battery;
 import lejos.hardware.ev3.LocalEV3;
 import lejos.hardware.lcd.GraphicsLCD;
@@ -13,7 +13,7 @@ import lejos.hardware.lcd.TextLCD;
 public class InfoBar
 {
 	private static final int ICON_BATTERY_BLINK = 4 * Reference.ANIMATION_DELAY;
-	private static final Image wifiImage = Icon.WIFI_SMALL.loadIcon();
+	private static final Image wifiImage = StockIcon.WIFI_SMALL.call();
 	private static final int ICON_X = 160;
 	
 	private String title;
@@ -28,7 +28,7 @@ public class InfoBar
 	
 	public InfoBar(String default_title)
 	{
-		this.title = default_title;
+		this.setTitle(default_title);
 		this.wifi = 0;
 	}
 	
@@ -63,14 +63,8 @@ public class InfoBar
 	{
 		this.updateChargeLevel();
 		lcd.drawString(title, 8 - (title.length() / 2), 0);
-		if(isOk || (System.currentTimeMillis() % (2 * ICON_BATTERY_BLINK)) < ICON_BATTERY_BLINK)
-		{
-			this.drawFormattedLevel(0, 0);
-		}
-		else
-		{
-			lcd.drawString("   ", 0, 0);
-		}
+		if(isOk || (System.currentTimeMillis() % (2 * ICON_BATTERY_BLINK)) < ICON_BATTERY_BLINK) this.drawFormattedLevel(0, 0);
+		else lcd.drawString("   ", 0, 0);
 		
 		if(wifi == 1)
 		{

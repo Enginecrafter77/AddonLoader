@@ -1,7 +1,7 @@
 package lejos;
 
-import addonloader.lib.Icon;
-import addonloader.util.InputMethod;
+import addonloader.menu.InputMethod;
+import addonloader.util.StockIcon;
 import lejos.hardware.Button;
 import lejos.hardware.ev3.LocalEV3;
 import lejos.hardware.lcd.Font;
@@ -26,13 +26,13 @@ public class DefaultKeyboard extends InputMethod
 			  "~/_`&.,?!'>", 
 			  "^	 <>  ^" } };
 
-	public String call()
+	public void run()
 	{
-		Image ic_ok = Icon.KEY_OK.loadIcon();
-		Image ic_symbol = Icon.KEY_SYMBOLS.loadIcon();
-		Image ic_del = Icon.KEY_DEL.loadIcon();
-		Image ic_shift = Icon.KEY_SHIFT.loadIcon();
-		Image ic_shifton = Icon.KEY_SHIFTON.loadIcon();
+		Image ic_ok = StockIcon.KEY_OK.call();
+		Image ic_symbol = StockIcon.KEY_SYMBOLS.call();
+		Image ic_del = StockIcon.KEY_DEL.call();
+		Image ic_shift = StockIcon.KEY_SHIFT.call();
+		Image ic_shifton = StockIcon.KEY_SHIFTON.call();
 		
 		int sx = 0, sy = 0, keyboard = 0;
 
@@ -163,14 +163,15 @@ public class DefaultKeyboard extends InputMethod
 				else if(sy == 1 && sx == 10)
 				{
 					// Finish Key Pressed
-					return this.getString();
+					return;
 				}
 				else
 					// Character Key Pressed
 					buffer.append(keyboards[keyboard][sy].substring(sx, sx + 1));
 				break;
 			case Button.ID_ESCAPE:
-				return null;
+				this.invalid = true;
+				return;
 			}
 			lcd.refresh();
 

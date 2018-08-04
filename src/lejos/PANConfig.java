@@ -8,8 +8,9 @@ import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.List;
 
-import addonloader.lib.Icon;
+import addonloader.util.Icon;
 import addonloader.util.MenuUtils;
+import addonloader.util.StockIcon;
 import lejos.hardware.Bluetooth;
 import lejos.hardware.BluetoothException;
 import lejos.hardware.BrickFinder;
@@ -26,7 +27,7 @@ public class PANConfig {
 	final String[] modeIDS = { "NONE", "AP", "AP+", "BT", "USB" };
 	final String[] modeNames = { "None", "Access Pt", "Access Pt+", "BT Client", "USB Client" };
 	final String[] serviceNames= {"NAP", "PANU", "GN"};
-	final Icon[] modeIcons = {Icon.AP_DISABLED, Icon.ACCESSPOINT, Icon.AP_PLUS, Icon.BLUETOOTH, Icon.USB};
+	final Icon[] modeIcons = {StockIcon.AP_DISABLED, StockIcon.ACCESSPOINT, StockIcon.AP_PLUS, StockIcon.BLUETOOTH, StockIcon.USB};
 	final String defaultIP = "208";
 	static final String autoIP = "0.0.0.0";
 	static final String anyAP = "*";
@@ -453,7 +454,14 @@ public class PANConfig {
 		do
 		{
 			MainMenu.self.newScreen("PAN");
-			menu.setItems(modeNames, Icon.toImages(modeIcons));
+			try
+			{
+				menu.setItems(modeNames, Icon.loadIcons(modeIcons));
+			}
+			catch(Exception exc)
+			{
+				menu.setItems(modeNames);
+			}
 			selection = menu.getSelection(curMode);
 			if (selection >= 0)
 			{

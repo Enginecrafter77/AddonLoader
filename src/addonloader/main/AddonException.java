@@ -1,7 +1,4 @@
-package addonloader.lib;
-
-import addonloader.main.LoadingStage;
-import addonloader.main.MenuAddon;
+package addonloader.main;
 
 /**
  * Exception that may be thrown during loading addons.

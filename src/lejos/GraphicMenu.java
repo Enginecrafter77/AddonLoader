@@ -57,8 +57,8 @@ public class GraphicMenu extends TextMenu {
 	/**
 	 * This constructor allows the specification of a title (of up to 16 characters) <br>
 	 * The title is displayed in the row above the item list.
-	 * @param items  -  string array containing the menu items. No items beyond the first null will be displayed.
-	 * @param icons  -  string array containing the icon data in the form of a string instead of a byte[].
+	 * @param items - string array containing the menu items. No items beyond the first null will be displayed.
+	 * @param icons - string array containing the icon data in the form of a string instead of a byte[].
 	 */	
 	public GraphicMenu(String[] items, Image[] icons, int line, String title, int titleLine)
 	{

@@ -1,5 +1,6 @@
 package lejos;
 
+import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.UnsupportedEncodingException;
 import java.security.NoSuchAlgorithmException;
@@ -9,8 +10,8 @@ import javax.crypto.SecretKey;
 import javax.crypto.SecretKeyFactory;
 import javax.crypto.spec.PBEKeySpec;
 
-import addonloader.main.ActionRegistry;
-import addonloader.util.InputMethod;
+import addonloader.menu.HookRegistry;
+import addonloader.menu.InputMethod;
 
 /**
  * Class written to store various network-related methods.
@@ -26,27 +27,17 @@ public class NetUtils {
 	 * @param ssid The name of the network (SSID)
 	 * @param pwd The password of the network, if any
 	 */
-	public static void writeConfig(String ssid, String pwd, boolean hidden)
+	public static void writeConfig(String ssid, String psk, boolean hidden) throws IOException
 	{
-		try
-		{
-			PrintWriter pw = new PrintWriter(WIFI_CONFIG);
-			pw.println("ctrl_interface=/var/run/wpa_supplicant\n");
-			pw.println("network={");
-			pw.println("\tssid=\"" + ssid + '\"');
-			pw.println("\tkey_mgmt=WPA-PSK NONE");
-			if(!pwd.isEmpty())
-			{
-				pw.println("\tpsk=" + NetUtils.computePSK(ssid, pwd));
-			}
-			pw.println("\tscan_ssid=" + (hidden ? '1' : '0'));
-			pw.println("}");
-			pw.close();
-		}
-		catch(Exception e)
-		{
-			System.err.println("Failed to write wpa supplication configuration: " + e);
-		}
+		PrintWriter pw = new PrintWriter(WIFI_CONFIG);
+		pw.println("ctrl_interface=/var/run/wpa_supplicant\n");
+		pw.println("network={");
+		pw.println("\tssid=\"" + ssid + '\"');
+		pw.println("\tkey_mgmt=WPA-PSK NONE");
+		if(psk != null) pw.println("\tpsk=" + psk);
+		pw.println("\tscan_ssid=" + (hidden ? '1' : '0'));
+		pw.println("}");
+		pw.close();
 	}
 	
 	/**
@@ -64,44 +55,38 @@ public class NetUtils {
 	 */
 	protected static void connectAP(String ap)
 	{
-		ActionRegistry.WIFI_CONNECT.setExtra(ap);
-		if(ActionRegistry.WIFI_CONNECT.runMethodsB())
+		HookRegistry.WIFI_CONNECT.loadCarrier(ap);
+		if(HookRegistry.WIFI_CONNECT.runHooks(0) > 0) return;
+		HookRegistry.WIFI_CONNECT.runHooks(1);
+		boolean hidden = false;
+		if(ap.equals("[HIDDEN]"))
 		{
-			boolean hidden = false;
-			if(ap.equals("[HIDDEN]"))
-			{
-				System.out.println("AP is hidden, requesting ESSID");
-				ap = InputMethod.current.getString();
-				hidden = true;
-			}
-			System.out.println("Access point is " + ap);
-			
-			String pwd = InputMethod.current.getString();
-			if(pwd != null)
-			{
-			   	System.out.println("Password is " + (pwd.isEmpty() ? "empty" : pwd));
-			   	WaitScreen.instance.begin("Restart\nWiFi\nServices");
-			   	WaitScreen.instance.status("Write config");
-			   	writeConfig(ap, pwd, hidden);
-			   	WaitScreen.instance.status("Connecting...");
-			   	connect();
-			   	WaitScreen.instance.end();
-			}
+			System.out.println("AP is hidden, requesting ESSID");
+			ap = InputMethod.current.call();
+			hidden = true;
 		}
-		ActionRegistry.WIFI_CONNECT.runMethodsA();
-	}
-	
-	private static String bytesToHex(byte[] buf)
-	{
-		int len = buf.length;
-		char[] r = new char[len * 2];
-		for(int i = 0; i < len; i++)
+		System.out.println("Access point is " + ap);
+		
+		String pwd = InputMethod.current.call();
+		if(pwd != null)
 		{
-			int v = buf[i];
-			r[i * 2] = hexChars[(v >>> 4) & 0xF];
-			r[i * 2 + 1] = hexChars[v & 0xF];
+			System.out.println("Password is " + (pwd.isEmpty() ? "empty" : pwd));
+		   	WaitScreen.instance.begin("Restart\nWiFi\nServices");
+		   	WaitScreen.instance.status("Write config");
+		   	try
+		   	{
+		   		writeConfig(ap, computePSK(ap, pwd), hidden);
+		   	}
+		   	catch(Exception exc)
+		   	{
+		   		System.err.println(String.format("[ERROR] Failed writing WPA configuration. (%s)", exc.getClass().getName()));
+		   		return;
+		   	}
+		   	WaitScreen.instance.status("Connecting...");
+		   	connect();
+		   	WaitScreen.instance.end();
 		}
-		return new String(r);
+		HookRegistry.WIFI_CONNECT.runHooks(2);
 	}
 	
 	/**
@@ -115,14 +100,22 @@ public class NetUtils {
 	 */
 	public static String computePSK(String ssid, String password) throws UnsupportedEncodingException, NoSuchAlgorithmException, InvalidKeySpecException
 	{
-		byte[] ss = ssid.getBytes("utf8");
+		byte[] ssid_bytes = ssid.getBytes("utf8");
 		char[] pass = password.toCharArray();
 		
 		SecretKeyFactory f = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA1");
-		KeySpec ks = new PBEKeySpec(pass, ss, 4096, 256);
+		KeySpec ks = new PBEKeySpec(pass, ssid_bytes, 4096, 256);
 		SecretKey s = f.generateSecret(ks);
-		byte[] k = s.getEncoded();
+		byte[] buf = s.getEncoded();
 		
-		return bytesToHex(k);
+		int len = buf.length;
+		char[] result = new char[len * 2];
+		for(int i = 0; i < len; i++)
+		{
+			int v = buf[i];
+			result[i * 2] = hexChars[(v >>> 4) & 0xF];
+			result[i * 2 + 1] = hexChars[v & 0xF];
+		}
+		return new String(result);
 	}
 }

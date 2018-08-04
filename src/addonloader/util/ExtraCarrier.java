@@ -1,4 +1,4 @@
-package addonloader.lib;
+package addonloader.util;
 
 /**
  * Interface implemented by so called extra carriers.
@@ -9,13 +9,13 @@ package addonloader.lib;
  */
 public interface ExtraCarrier<T> {
 	/**
-	 * Sets extra object that will be stored in this object. Can be retrieved using {@link #getExtra()}.
+	 * Sets extra object that will be stored in this object. Can be retrieved using {@link #fetchCarrier()}.
 	 * @param extra The extra string to be set.
 	 */
-	public void setExtra(T extra);
+	public void loadCarrier(T extra);
 	/**
-	 * Returns extra stored in this object, that was previously set by {@link #setExtra(T)} 
+	 * Returns extra stored in this object, that was previously set by {@link #loadCarrier(T)} 
 	 * @return Extra object stored.
 	 */
-	public T getExtra();
+	public T fetchCarrier();
 }

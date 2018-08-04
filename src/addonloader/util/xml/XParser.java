@@ -1,4 +1,4 @@
-package addonloader.lib.xml;
+package addonloader.util.xml;
 
 import java.io.File;
 import java.io.FileReader;

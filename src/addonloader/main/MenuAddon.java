@@ -9,23 +9,32 @@ import java.io.File;
 public abstract class MenuAddon {
 	
 	/**
-	 * The name of addon. It is set by the {@link AddonLoader} from
-	 * the annotation {@link Addon} before the {@link #init()}
-	 */
-	protected String name;
-	/**
 	 * The jar file of the addon. Provides access to the jarfile by the addon,
 	 * without the addon actually knowing where the jar resides. It is set
 	 * by the {@link AddonLoader} on jar loading.
 	 */
 	protected File jarfile;
 	
+	/**
+	 * The name of addon. It is set by the {@link AddonLoader} from
+	 * the annotation {@link Addon} before the {@link #init()}
+	 */
+	public final String name;
+	
+	public final int apilevel;
+	
+	protected MenuAddon(final int apilevel, final String name)
+	{
+		this.apilevel = apilevel;
+		this.name = name;
+	}
+	
 	/** The first stage of loading process.*/
 	protected abstract void init();
 	/** The main stage of loading process.*/
 	protected abstract void load();
 	/** The last stage of loading process.*/
-	protected abstract void finish();
+	protected abstract void cleanup();
 	
 	/**
 	 * @return The location of the addon jar file.

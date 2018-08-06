@@ -1,11 +1,11 @@
-package addonloader.betamenu;
+package addonloader.betamenu.bar;
 
 import lejos.hardware.lcd.GraphicsLCD;
 
 public interface DockApplet {
 	
 	/**
-	 * Called to draw DockApp's icon.
+	 * Called to draw DockApplet's icon.
 	 * Icon is anchored at top left corner.
 	 * By convention, the icons must not be
 	 * taller than 16 pixels.

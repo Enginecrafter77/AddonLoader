@@ -12,7 +12,7 @@ public class NoOpEntry extends SimpleMenuEntry {
 	@Override
 	public void run()
 	{
-		System.err.println(String.format("[WARNING] No-OP Entry %s's code was run as Runnable.", this.getName()));
+		System.err.println(String.format("[WARNING] No-OP Entry %s's code was run as Runnable.", this.get_name()));
 	}
 
 }

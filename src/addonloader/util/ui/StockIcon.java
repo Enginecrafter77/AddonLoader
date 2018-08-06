@@ -1,9 +1,9 @@
-package addonloader.util;
+package addonloader.util.ui;
 
 import java.io.IOException;
 
 import addonloader.main.Reference;
-import addonloader.util.ui.Icon;
+import addonloader.util.BinaryStorage;
 import lejos.hardware.lcd.Image;
 
 /**

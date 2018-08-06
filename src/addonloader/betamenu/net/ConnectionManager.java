@@ -23,10 +23,10 @@ public class ConnectionManager {
 	public final LocalBTDevice bluetooth;
 	public final LocalWifiDevice wifi;
 	public final Brick brick;
-	private final String bluetooth_pin_format;
-	private final Random rng;
 	
-	private HashMap<String, InetAddress> interface_adresses; 
+	private final HashMap<String, InetAddress> interface_adresses;
+	private final String bluetooth_pin_format;
+	private final Random rng; 
 	
 	private String bluetooth_pin;
 	private boolean bluetooth_random_pin;
@@ -40,6 +40,7 @@ public class ConnectionManager {
 		this.bluetooth = brick.getBluetoothDevice();
 		this.wifi = brick.getWifiDevice();
 		this.rng = new Random();
+		this.update_interfaces();
 	}
 	
 	public void update_interfaces()
@@ -68,6 +69,11 @@ public class ConnectionManager {
 		}
 	}
 	
+	public InetAddress get_address(String iface)
+	{
+		return this.interface_adresses.get(iface);
+	}
+	
 	public AccessPoint[] search_wifi()
 	{
 		String[] ap_names = this.wifi.getAccessPointNames();
@@ -82,6 +88,13 @@ public class ConnectionManager {
 		RemoteBTDevice[] result = new RemoteBTDevice[search_result.size()];
 		search_result.toArray(result);
 		return result;
+	}
+	
+	public boolean bluetooth_toggle_visibility()
+	{
+		boolean vis = !this.bluetooth.getVisibility();
+		this.bluetooth.setVisibility(vis);
+		return vis;
 	}
 	
 	public void configure_wpa(AccessPoint ap, String psk) throws IOException

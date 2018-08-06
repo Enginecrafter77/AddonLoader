@@ -45,11 +45,12 @@ public abstract class MenuCircular<ENT_TYPE> extends LinkedList<ENT_TYPE>
 	
 	/**
 	 * Opens the menu.
+	 * @param def The default selection.
 	 * @return Selected item index.
 	 */
-	public int open()
+	public int open(int selection)
 	{
-		int selection = 0, button = 0;
+		int button = 0;
 		
 		while(button != Button.ID_ENTER)
 		{

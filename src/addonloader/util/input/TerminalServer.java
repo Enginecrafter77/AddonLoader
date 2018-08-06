@@ -1,4 +1,4 @@
-package addonloader.betamenu;
+package addonloader.util.input;
 
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -7,20 +7,20 @@ import java.io.Reader;
 import java.net.ServerSocket;
 import java.net.Socket;
 
-import addonloader.util.InputMethod;
 import lejos.hardware.lcd.Font;
 import lejos.hardware.lcd.GraphicsLCD;
 
 public class TerminalServer extends InputMethod {
 
 	public static ServerSocket server;
+	public static Socket client;
 	
 	public static void attach_std()
 	{
 		try
 		{
 			server = new ServerSocket(8765);
-			Socket client = server.accept();
+			client = server.accept();
 			PrintStream out_wrapper = new PrintStream(client.getOutputStream());
 			
 			System.setIn(client.getInputStream());
@@ -66,14 +66,7 @@ public class TerminalServer extends InputMethod {
 	@Override
 	public boolean ready()
 	{
-		try
-		{
-			return System.in.available() > 0;
-		}
-		catch(IOException exc)
-		{
-			return false;
-		}
+		return client != null;
 	}
 
 }

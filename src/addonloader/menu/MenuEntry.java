@@ -6,15 +6,15 @@ import addonloader.util.ui.Icon;
  * Interface representing entry in MappedMenu. MenuEntry extends Runnable,
  * so when the user selects this menu, some code is run.
  * 
- * MenuEntry consists of {@link #getName() name} and {@link #getIcon() icon}
+ * MenuEntry consists of {@link #get_name() name} and {@link #get_icon() icon}
  * @author Enginecrafter77
  */
 public interface MenuEntry extends Runnable{
 	
 	/** The name of the menu entry */
-	public Icon getIcon();
+	public Icon get_icon();
 	/** The icon of the menu entry */
-	public String getName();
+	public String get_name();
 	/** Sets the owning parent */
-	public void setParent(MappedMenu menu);
+	public void set_parent(MappedMenu menu);
 }

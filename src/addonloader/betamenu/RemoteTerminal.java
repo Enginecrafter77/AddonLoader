@@ -1,5 +1,6 @@
 package addonloader.betamenu;
 
+import java.awt.Color;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
@@ -49,6 +50,8 @@ public class RemoteTerminal {
 			input_send.addActionListener(action);
 			input.addKeyListener(action);
 			output.setEditable(false);
+			output.setBackground(Color.BLACK);
+			output.setForeground(Color.GREEN);
 			
 			root_panel.setResizeWeight(1);
 			input_panel.setResizeWeight(1);
@@ -67,7 +70,7 @@ public class RemoteTerminal {
 			channel_out = new PrintStream(channel.getOutputStream());
 			channel_in = new Scanner(channel.getInputStream());
 			
-			output.append("[CONNECTED]");
+			output.append("[CONNECTED]\n");
 			window.setVisible(true);
 			updater.start();
 			

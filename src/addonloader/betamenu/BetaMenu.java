@@ -3,19 +3,21 @@ package addonloader.betamenu;
 import java.util.Collection;
 import java.util.Iterator;
 
-import addonloader.betamenu.app.BatteryApplet;
-import addonloader.betamenu.app.WifiApplet;
-import addonloader.betamenu.net.AccessPoint;
+import addonloader.betamenu.bar.BatteryApplet;
+import addonloader.betamenu.bar.DockBar;
+import addonloader.betamenu.bar.WifiApplet;
 import addonloader.betamenu.net.ConnectionManager;
-import addonloader.main.DefaultKeyboard;
+import addonloader.main.Reference;
 import addonloader.menu.MappedMenu;
 import addonloader.menu.MenuEntry;
 import addonloader.menu.SimpleMenuEntry;
 import addonloader.menu.SubmenuEntry;
-import addonloader.util.InputMethod;
 import addonloader.util.LoadingScreen;
-import addonloader.util.MenuUtils;
-import addonloader.util.StockIcon;
+import addonloader.util.Settings;
+import addonloader.util.input.DefaultKeyboard;
+import addonloader.util.input.InputMethod;
+import addonloader.util.input.PipeInput;
+import addonloader.util.ui.StockIcon;
 import lejos.hardware.Button;
 import lejos.hardware.RemoteBTDevice;
 import lejos.hardware.lcd.LCD;
@@ -24,17 +26,21 @@ import lejos.utility.TextMenu;
 public class BetaMenu extends MappedMenu {
 	
 	private static final long serialVersionUID = -7226674803840849026L;
+	public static Settings settings;
 	public static BetaMenu instance;
 	
 	public static void main(String[] args)
 	{
 		LCD.drawString("Wait for client", 0, 3);
-		TerminalServer.attach_std();
 		LCD.clear();
+		PipeInput.attach_std();
 		InputMethod.set_fallback(new DefaultKeyboard());
-		InputMethod.add(new TerminalServer());
+		InputMethod.add(new PipeInput(Reference.MENU_DIRECTORY + "/input"));
+		settings = new Settings(Reference.LEJOS_HOME + "/settings.properties");
 		instance = new BetaMenu(args.length > 0 ? args[0] : "EV3");
-		instance.open();
+		settings.load();
+		instance.open(0);
+		settings.store();
 	}
 	
 	//			//
@@ -46,7 +52,6 @@ public class BetaMenu extends MappedMenu {
 	private ConnectionManager conman;
 	private LoadingScreen loading_screen;
 	private DockBar menubar;
-	private int exit;
 	
 	public BetaMenu(String hostname)
 	{
@@ -55,7 +60,7 @@ public class BetaMenu extends MappedMenu {
 		this.loading_screen.start("BetaMenu");
 		
 		this.loading_screen.setState("ConnectionMan", 10);
-		this.conman = new ConnectionManager("####");
+		this.conman = new ConnectionManager("######");
 		this.loading_screen.setState("Init Menu", 50);
 		this.menubar = new DockBar(3, 750);
 		this.wifi = new SubmenuEntry("Wifi", StockIcon.WIFI);
@@ -66,7 +71,6 @@ public class BetaMenu extends MappedMenu {
 		this.btsettings = new SubmenuEntry("Settings", StockIcon.GEAR);
 		this.btdevmenu = new MappedMenu("BT DEV");
 		
-		this.loading_screen.setState("ConnectionMan", 10);
 		this.loading_screen.setState("Add Applets", 75);
 		this.menubar.add_applet(new BatteryApplet());
 		this.menubar.add_applet(new WifiApplet(conman));
@@ -82,22 +86,23 @@ public class BetaMenu extends MappedMenu {
 	}
 	
 	@Override
-	public int open()
+	public int open(int selection)
 	{
 		menubar.start();
 		System.out.println("Menu started");
 		
-		int selection;
-		while(exit == 0)
+		while(true)
 		{
-			selection = super.open();
-			if(selection < 0) exit = 1;
-			this.get(selection).run();
+			LCD.clear();
+			this.menubar.load_carrier("BetaMenu");
+			selection = super.open(selection);
+			if(selection < 0) break;
+			else this.get(selection).run();
 		}
 		
 		System.out.println("Menu finished");
 		menubar.interrupt();
-		return exit;
+		return selection;
 	}
 	
 	@Override
@@ -108,40 +113,33 @@ public class BetaMenu extends MappedMenu {
 	}
 	
 	private void init_menu_entries()
-	{		
-		wifi.add(new SimpleMenuEntry("Connect", StockIcon.SEARCH) {
+	{
+		wifi.add(new WifiConnectEntry(this.conman, this.loading_screen));
+		sound.add(new SoundEntry("M-Volume", 0));
+		sound.add(new SoundEntry("B-Volume", 1));
+		sound.add(new SoundEntry("B-Freq", 2));
+		sound.add(new SoundEntry("B-Length", 3));
+		bluetooth.add(btsettings);
+		
+		wifi.add(new SimpleMenuEntry("View IP", StockIcon.INFO) {
 			@Override
 			public void run()
 			{
-				AccessPoint[] access_points = conman.search_wifi();
-				String[] menu_items = new String[access_points.length + 1];
-				for(int index = 0; index < access_points.length; index++) menu_items[index] = access_points[index].essid;
-				menu_items[access_points.length] = "Add Hidden..."; //Special entry for hidden AP.
+				this.textflash(conman.get_address(Reference.WLAN_INTERFACE).getHostAddress());
+			}
+		});
+		
+		system.add(new SimpleMenuEntry("Keyboard Test", StockIcon.LIST) {
+			@Override
+			public void run()
+			{
+				String out = InputMethod.enter();
 				
 				LCD.clear();
-				int selection = new TextMenu(menu_items).select();
-				if(selection < 0) return;
-				String pass = InputMethod.enter();
-				loading_screen.start("Connecting");
-				AccessPoint target = selection == access_points.length ? new AccessPoint(InputMethod.enter()) : access_points[selection];
-				try
-				{
-					loading_screen.setState("Computing PSK", 15);
-					pass = target.compute_psk(pass);
-					loading_screen.setState("Writing WPA", 50);
-					conman.configure_wpa(target, pass);
-					loading_screen.setState("Querying AP");
-					Process proc = conman.wifi_connect();
-					loading_screen.readStream(proc.getInputStream(), 2);
-					proc.waitFor();
-					loading_screen.setState("Parsing IP", 95);
-					conman.update_interfaces();
-				}
-				catch(Exception exc)
-				{
-					exc.printStackTrace();
-				}
-				loading_screen.stop();
+				LCD.drawString("Entered:", 1, 3);
+				LCD.drawString(out, 1, 4);
+				Button.waitForAnyPress();
+				LCD.clear();
 			}
 		});
 		
@@ -161,7 +159,7 @@ public class BetaMenu extends MappedMenu {
 			@Override
 			public void run()
 			{
-				conman.bluetooth.setVisibility(MenuUtils.askConfirm("Make Visible?"));
+				this.textflash((conman.bluetooth_toggle_visibility() ? "V" : "Inv") + "isibile");
 			}
 		});
 		bluetooth.add(new SimpleMenuEntry("Devices", StockIcon.LIST) {
@@ -181,22 +179,7 @@ public class BetaMenu extends MappedMenu {
 				int selection = new TextMenu(devstrlist).select();
 				if(selection < 0) return;
 				btdevmenu.load_carrier(device_list[selection].getAddress());
-				btdevmenu.get(btdevmenu.open()).run();
-			}
-		});
-		bluetooth.add(btsettings);
-		
-		system.add(new SimpleMenuEntry("Keyboard", StockIcon.LIST) {
-			@Override
-			public void run()
-			{
-				String out = InputMethod.enter();
-				
-				LCD.clear();
-				LCD.drawString("Entered:", 1, 3);
-				LCD.drawString(out, 1, 4);
-				Button.waitForAnyPress();
-				LCD.clear();
+				btdevmenu.get(btdevmenu.open(selection)).run();
 			}
 		});
 	}

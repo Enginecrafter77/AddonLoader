@@ -11,13 +11,13 @@ import java.io.IOException;
  * Binary storage is class used to store various data inside binary serialized from.
  * Data is written using the following scheme: <i>n[BlockStart+DATA]</i>. That means every block of data is prefixed by
  * <b>{@link #block_start Block Start}</b> bytes to dentote start of the block.
- * When retrieving data, as the data can have verious length, the program iterates through the database
+ * When retrieving data, as the data can have various length, the program iterates through the database
  * and counts separator characters, until the number of skipped separators is matched and the data begins to be read.
  * It means that elements cannot be accessed in random order, much like {@link java.util.LinkedList LinkedList}.
- * @param <P> The type of the stored data.
+ * @param DATA The type of the stored data.
  * @author Enginecrafter77
  */
-public abstract class BinaryStorage<P>{
+public abstract class BinaryStorage<DATA> {
 	
 	/**
 	 * Data block separation sequence.
@@ -25,20 +25,20 @@ public abstract class BinaryStorage<P>{
 	 * <b>less</b> chance of mismatch, but also <b>greater</b> disk space usage. <br><br>
 	 * 
 	 * So, Bigger block separator means: <br>
-	 * <b><font color='green'>Less</font></b> conflict probability<br>
-	 * <b><font color='red'>More</font></b> disk space usage and performance impact
+	 * <b><font color='green'>Less</font></b> probability of byte mismatch, eg. matching block start where it really isn't.<br>
+	 * <b><font color='red'>More</font></b> disk space usage (barely noticeable) and performance impact (minor)
 	 */
 	private static final byte[] block_start = {0x5b, 0x1f, 0x5d};
-	private final File f;
+	private final File stg_file;
 	
 	public BinaryStorage(File file)
 	{
-		this.f = file;
+		this.stg_file = file;
 	}
 	
 	public BinaryStorage(String path)
 	{
-		this.f = new File(path);
+		this.stg_file = new File(path);
 	}
 	
 	/**
@@ -47,23 +47,23 @@ public abstract class BinaryStorage<P>{
 	 * @return Valid P instance constructed from read data.
 	 * @throws IOException if something in FS wrecks up.
 	 */
-	protected abstract P readTag(DataInputStream stream) throws IOException;
+	protected abstract DATA readTag(DataInputStream stream) throws IOException;
 	
 	/**
 	 * Writes P into single data block to the binary storage.
 	 * @param stream The stream to write to.
 	 * @throws IOException if something in FS wrecks up.
 	 */
-	protected abstract void writeTag(P content, DataOutputStream stream) throws IOException;
+	protected abstract void writeTag(DATA content, DataOutputStream stream) throws IOException;
 	
 	/**
 	 * Adds content to the database.
 	 * @param content The content to be added
 	 * @throws IOException if something in filesystem shits up.
 	 */
-	public final void write(P content) throws IOException
+	public final void write(DATA content) throws IOException
 	{
-		DataOutputStream file = new DataOutputStream(new FileOutputStream(f, true));
+		DataOutputStream file = new DataOutputStream(new FileOutputStream(stg_file, true));
 		file.write(block_start);
 		writeTag(content, file);
 		file.close();
@@ -74,10 +74,10 @@ public abstract class BinaryStorage<P>{
 	 * @param content The content to be added
 	 * @throws IOException if something in filesystem shits up.
 	 */
-	public final void write(P[] content) throws IOException
+	public final void write(DATA[] content) throws IOException
 	{
-		DataOutputStream file = new DataOutputStream(new FileOutputStream(f, true));
-		for(P element : content)
+		DataOutputStream file = new DataOutputStream(new FileOutputStream(stg_file, true));
+		for(DATA element : content)
 		{
 			file.write(block_start);
 			writeTag(element, file);
@@ -91,9 +91,9 @@ public abstract class BinaryStorage<P>{
 	 * @return Retrieved content on index
 	 * @throws IOException if something in filesystem shits up.
 	 */
-	public final P read(int index) throws IOException
+	public final DATA read(int index) throws IOException
 	{
-		DataInputStream fr = new DataInputStream(new FileInputStream(f));
+		DataInputStream fr = new DataInputStream(new FileInputStream(stg_file));
 		int i = -1;
 		int matched = 0;
 		while(i < index)
@@ -116,7 +116,7 @@ public abstract class BinaryStorage<P>{
 	 */
 	public final int length() throws IOException
 	{
-		FileInputStream fr = new FileInputStream(f);
+		FileInputStream fr = new FileInputStream(stg_file);
 		int i = 0;
 		int matched = 0;
 		while(fr.available() > 0)
@@ -132,17 +132,17 @@ public abstract class BinaryStorage<P>{
 		return i;
 	}
 	
-	public final void exportFile(P content, File file) throws IOException
+	public final void exportFile(DATA content, File file) throws IOException
 	{
 		DataOutputStream fw = new DataOutputStream(new FileOutputStream(file));
 		this.writeTag(content, fw);
 		fw.close();
 	}
 	
-	public final P importFile(File file) throws IOException
+	public final DATA importFile(File file) throws IOException
 	{
 		DataInputStream fr = new DataInputStream(new FileInputStream(file));
-		P result = this.readTag(fr);
+		DATA result = this.readTag(fr);
 		fr.close();
 		return result;
 	}

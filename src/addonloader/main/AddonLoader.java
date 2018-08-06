@@ -10,7 +10,7 @@ import java.util.Enumeration;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 
-import addonloader.util.ObjectSettings;
+import addonloader.util.Settings;
 
 /**
  * The main class of AddonLoader. It does the main job of addon loading process.
@@ -22,7 +22,7 @@ import addonloader.util.ObjectSettings;
 public class AddonLoader {
 	
 	/** AddonLoader configuration. */
-	public final ObjectSettings props;
+	public final Settings props;
 	/** List of all addons to be runned. */
 	public final ArrayList<MenuAddon> addons;
 	
@@ -34,7 +34,7 @@ public class AddonLoader {
 	 */
 	public AddonLoader(String config) throws FileNotFoundException, IOException
 	{
-		props = new ObjectSettings(config);
+		props = new Settings(config);
 		addons = new ArrayList<MenuAddon>();
 	}
 	

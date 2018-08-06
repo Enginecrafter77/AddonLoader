@@ -2,11 +2,10 @@ package addonloader.menu;
 
 import java.io.IOException;
 import addonloader.util.DataCarrier;
-import addonloader.util.StockIcon;
 import addonloader.util.ui.Icon;
 import addonloader.util.ui.MenuCircular;
+import addonloader.util.ui.StockIcon;
 import lejos.hardware.lcd.Image;
-import lejos.hardware.lcd.LCD;
 
 /**
  * MappedMenu is simply menu, where you can dynamically add new entries.
@@ -75,7 +74,7 @@ public class MappedMenu extends MenuCircular<MenuEntry> implements DataCarrier<S
 			entry = new NoOpEntry(items[index], icons[index]);
 			try
 			{
-				if(entry.getIcon() instanceof StockIcon) ((StockIcon)entry.getIcon()).cache();
+				if(entry.get_icon() instanceof StockIcon) ((StockIcon)entry.get_icon()).cache();
 			}
 			catch(IOException exc)
 			{
@@ -87,23 +86,16 @@ public class MappedMenu extends MenuCircular<MenuEntry> implements DataCarrier<S
 	}
 	
 	@Override
-	public int open()
-	{
-		LCD.clear();
-		return super.open();
-	}
-	
-	@Override
 	public boolean add(MenuEntry entry)
 	{
-		entry.setParent(this);
+		entry.set_parent(this);
 		return super.add(entry);
 	}
 	
 	@Override
 	protected Image load_icon(int index)
 	{
-		Icon icn = this.get(index).getIcon();
+		Icon icn = this.get(index).get_icon();
 		try
 		{
 			return icn.call();
@@ -118,7 +110,7 @@ public class MappedMenu extends MenuCircular<MenuEntry> implements DataCarrier<S
 	@Override
 	protected String load_label(int index)
 	{
-		return this.get(index).getName();
+		return this.get(index).get_name();
 	}
 	
 	@Override

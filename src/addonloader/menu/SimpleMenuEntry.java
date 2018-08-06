@@ -1,6 +1,8 @@
 package addonloader.menu;
 
 import addonloader.util.ui.Icon;
+import lejos.hardware.Button;
+import lejos.hardware.lcd.LCD;
 
 public abstract class SimpleMenuEntry implements MenuEntry {
 	
@@ -15,21 +17,27 @@ public abstract class SimpleMenuEntry implements MenuEntry {
 	}
 
 	@Override
-	public Icon getIcon()
+	public Icon get_icon()
 	{
 		return this.icon;
 	}
 
 	@Override
-	public String getName()
+	public String get_name()
 	{
 		return this.title;
 	}
 	
 	@Override
-	public void setParent(MappedMenu menu)
+	public void set_parent(MappedMenu menu)
 	{
 		this.parent = menu;
+	}
+	
+	protected void textflash(String text)
+	{
+		LCD.drawString(text, (18 - text.length()) / 2, 3);
+		Button.waitForAnyPress();
 	}
 	
 }

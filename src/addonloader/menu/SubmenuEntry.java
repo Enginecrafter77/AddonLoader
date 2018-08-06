@@ -2,6 +2,7 @@ package addonloader.menu;
 
 import addonloader.util.DataCarrier;
 import addonloader.util.ui.Icon;
+import lejos.hardware.lcd.LCD;
 
 public class SubmenuEntry extends MappedMenu implements MenuEntry {
 	
@@ -30,13 +31,21 @@ public class SubmenuEntry extends MappedMenu implements MenuEntry {
 	}
 	
 	@Override
+	public boolean add(MenuEntry entry)
+	{
+		if(entry instanceof SubmenuEntry) ((SubmenuEntry)entry).set_title_service(this.title_carrier);
+		return super.add(entry);
+	}
+	
+	@Override
 	public void run()
 	{
 		int selection = 0;
 		do
 		{
+			LCD.clear();
 			if(this.title_carrier != null) title_carrier.load_carrier(this.title);
-			selection = this.open();
+			selection = this.open(selection);
 			if(selection < 0) break;
 			this.get(selection).run();
 		}
@@ -44,19 +53,19 @@ public class SubmenuEntry extends MappedMenu implements MenuEntry {
 	}
 
 	@Override
-	public Icon getIcon()
+	public Icon get_icon()
 	{
 		return this.icon;
 	}
 
 	@Override
-	public String getName()
+	public String get_name()
 	{
 		return this.title;
 	}
 	
 	@Override
-	public void setParent(MappedMenu menu)
+	public void set_parent(MappedMenu menu)
 	{
 		this.parent = menu;
 	}

@@ -1,9 +1,8 @@
-package addonloader.util;
+package addonloader.util.input;
 
 import java.util.ArrayList;
 import java.util.concurrent.Callable;
 
-import addonloader.betamenu.TerminalServer;
 import lejos.hardware.BrickFinder;
 import lejos.hardware.lcd.GraphicsLCD;
 
@@ -16,7 +15,7 @@ public abstract class InputMethod implements Callable<String> {
 	/**
 	 * A sorted list containing input method, sorted by priority. 0 is fallback, while the last is default.
 	 */
-	public static ArrayList<InputMethod> options = new ArrayList<InputMethod>(1);
+	private static final ArrayList<InputMethod> options = new ArrayList<InputMethod>(1);
 	
 	protected final GraphicsLCD screen;
 	private boolean invalid;
@@ -27,13 +26,24 @@ public abstract class InputMethod implements Callable<String> {
 		this.invalid = false;
 	}
 	
+	public abstract boolean ready();
+	
+	@Override
+	public abstract String call();
+	
+	protected String invalidate()
+	{
+		this.invalid = true;
+		return null;
+	}
+	
 	public static void set_fallback(InputMethod fallback)
 	{
 		if(options.size() > 0) options.set(0, fallback);
 		else options.add(fallback);
 	}
 	
-	public static int add(TerminalServer option)
+	public static int add(InputMethod option)
 	{
 		int next_index = options.size();
 		options.add(option);
@@ -54,17 +64,6 @@ public abstract class InputMethod implements Callable<String> {
 			}
 		}
 		
-		return null;
-	}
-	
-	public abstract boolean ready();
-	
-	@Override
-	public abstract String call();
-	
-	protected String invalidate()
-	{
-		this.invalid = true;
 		return null;
 	}
 }

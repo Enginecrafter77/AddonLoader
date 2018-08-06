@@ -8,6 +8,7 @@ import addonloader.menu.MappedMenu;
 import addonloader.menu.MenuEntry;
 import addonloader.menu.SubmenuEntry;
 import addonloader.util.ui.Icon;
+import addonloader.util.ui.StockIcon;
 import addonloader.util.xml.XElement;
 import lejos.hardware.lcd.LCD;
 
@@ -83,11 +84,11 @@ public class MenuUtils {
 	 * @param def A default selection.
 	 * @return True if pressed yes.
 	 */
-	public static boolean askConfirm(String prompt)
+	public static boolean askConfirm(String prompt, boolean def)
 	{
-		MappedMenu menu = new MappedMenu("Confirm", new String[]{"No", "Yes"}, new Icon[]{StockIcon.YES, StockIcon.NO});
+		MappedMenu menu = new MappedMenu("Confirm", new String[]{"No", "Yes"}, new Icon[]{StockIcon.NO, StockIcon.YES});
 		LCD.drawString(prompt, 1, 2);
-		return menu.open() == 1;
+		return menu.open(def ? 1 : 0) == 1;
 	}
 	
 	public void generateFromXML(MappedMenu parent, XElement source) throws NoSuchFieldException, ClassNotFoundException, InstantiationException, IllegalAccessException, IOException

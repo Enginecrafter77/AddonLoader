@@ -1,21 +1,25 @@
 package addonloader.util;
 
 /**
- * Interface implemented by so called extra carriers.
- * Extra carriers are objects that must in some situations provide an extra argument to another
- * classes. This interface implements simple getter and setter for this purpose.
+ * Data carrier is an simple interface, providing
+ * way to access single type property of implementing
+ * class, without much hassle around casting. The
+ * object can be stored using {@link #load_carrier(Object)},
+ * and retrieved using {@link #fetch_carrier()}.
  * @author Enginecrafter77
  * @param DATA_TYPE The type of carried object.
  */
 public interface DataCarrier<DATA_TYPE> {
 	/**
-	 * Sets extra object that will be stored in this object. Can be retrieved using {@link #fetch_carrier()}.
-	 * @param data The extra string to be set.
+	 * Sets the data carried by this object instance.
+	 * @param The data going to be carried by object's instance
 	 */
 	public void load_carrier(DATA_TYPE data);
 	/**
-	 * Returns extra stored in this object, that was previously set by {@link #load_carrier(DATA_TYPE)} 
-	 * @return Extra object stored.
+	 * Retrieves the data carried by this object instance,
+	 * previously set by load_carrier or internal
+	 * class methods.
+	 * @return The data carried by object's instance
 	 */
 	public DATA_TYPE fetch_carrier();
 	

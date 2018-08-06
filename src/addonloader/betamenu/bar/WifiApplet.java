@@ -1,10 +1,9 @@
-package addonloader.betamenu.app;
+package addonloader.betamenu.bar;
 
 import java.io.IOException;
 
-import addonloader.betamenu.DockApplet;
 import addonloader.betamenu.net.ConnectionManager;
-import addonloader.util.StockIcon;
+import addonloader.util.ui.StockIcon;
 import lejos.hardware.lcd.GraphicsLCD;
 import lejos.hardware.lcd.Image;
 

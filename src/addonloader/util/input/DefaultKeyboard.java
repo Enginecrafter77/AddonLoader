@@ -1,7 +1,6 @@
-package addonloader.main;
+package addonloader.util.input;
 
-import addonloader.util.InputMethod;
-import addonloader.util.StockIcon;
+import addonloader.util.ui.StockIcon;
 import lejos.hardware.Button;
 import lejos.hardware.ev3.LocalEV3;
 import lejos.hardware.lcd.Font;

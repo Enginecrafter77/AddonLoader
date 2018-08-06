@@ -1,7 +1,9 @@
 package addonloader.util;
 
 
-import lejos.Utils;
+import java.io.InputStream;
+import java.util.Scanner;
+
 import lejos.hardware.ev3.LocalEV3;
 import lejos.hardware.lcd.GraphicsLCD;
 import lejos.hardware.lcd.LCD;
@@ -56,7 +58,7 @@ public class LoadingScreen{
 	 * Sets the title of the bar.
 	 * @param text
 	 */
-	public void setText(String text)
+	public void setState(String text)
 	{
 		LCD.clear(4);
 		LCD.drawString(text, 1, 4);
@@ -69,8 +71,22 @@ public class LoadingScreen{
 	 */
 	public void setState(String text, int progress)
 	{
-		this.setText(text);
+		this.setState(text);
 		this.setProgress(progress);
+	}
+	
+	public void readStream(InputStream stream, int step)
+	{
+		Scanner input = new Scanner(stream);
+		String line;
+		while(input.hasNextLine())
+		{
+			line = input.nextLine();
+			if(line.length() > 14) line = line.substring(0, 11) + "...";
+			this.setState(line);
+			this.addProgress(step);
+		}
+		input.close();
 	}
 	
 	/**
@@ -102,7 +118,7 @@ public class LoadingScreen{
 	{
 		//We first remap the progress in new range <0;161>
 		//and then draw the rectangle using widht from our mapped number.
-		lcd.fillRect(9, 102, Utils.map(progress, 0, 100, 0, 161), 16);
+		lcd.fillRect(9, 102, MenuUtils.map(progress, 0, 100, 0, 161), 16);
 	}
 	
 	/**

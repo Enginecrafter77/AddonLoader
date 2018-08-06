@@ -15,4 +15,6 @@ public interface MenuEntry extends Runnable{
 	public Icon getIcon();
 	/** The icon of the menu entry */
 	public String getName();
+	/** Sets the owning parent */
+	public void setParent(MappedMenu menu);
 }

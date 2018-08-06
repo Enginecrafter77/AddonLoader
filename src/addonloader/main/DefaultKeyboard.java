@@ -1,6 +1,6 @@
-package lejos;
+package addonloader.main;
 
-import addonloader.menu.InputMethod;
+import addonloader.util.InputMethod;
 import addonloader.util.StockIcon;
 import lejos.hardware.Button;
 import lejos.hardware.ev3.LocalEV3;
@@ -11,7 +11,7 @@ import lejos.hardware.lcd.Image;
 public class DefaultKeyboard extends InputMethod
 {	
 	private static GraphicsLCD lcd = LocalEV3.get().getGraphicsLCD();
-
+	
 	private static String[][] keyboards = {
 			{ "1234567890?", 
 			   "qwertyuiop<", 
@@ -26,13 +26,23 @@ public class DefaultKeyboard extends InputMethod
 			  "~/_`&.,?!'>", 
 			  "^	 <>  ^" } };
 
-	public void run()
+	public String call()
 	{
-		Image ic_ok = StockIcon.KEY_OK.call();
-		Image ic_symbol = StockIcon.KEY_SYMBOLS.call();
-		Image ic_del = StockIcon.KEY_DEL.call();
-		Image ic_shift = StockIcon.KEY_SHIFT.call();
-		Image ic_shifton = StockIcon.KEY_SHIFTON.call();
+		StringBuilder buffer = new StringBuilder();
+		Image ic_ok, ic_symbol, ic_del, ic_shift, ic_shifton;
+		try
+		{
+			ic_ok = StockIcon.KEY_OK.call();
+			ic_symbol = StockIcon.KEY_SYMBOLS.call();
+			ic_del = StockIcon.KEY_DEL.call();
+			ic_shift = StockIcon.KEY_SHIFT.call();
+			ic_shifton = StockIcon.KEY_SHIFTON.call();
+		}
+		catch(Exception exc)
+		{
+			exc.printStackTrace();
+			return this.invalidate();
+		}
 		
 		int sx = 0, sy = 0, keyboard = 0;
 
@@ -158,24 +168,29 @@ public class DefaultKeyboard extends InputMethod
 				else if(sy == 0 && sx == 10)
 				{
 					// Backspace Key Pressed
-					if(buffer.length() > 0) this.buffer.setLength(this.buffer.length() - 1);
+					if(buffer.length() > 0) buffer.setLength(buffer.length() - 1);
 				}
 				else if(sy == 1 && sx == 10)
 				{
 					// Finish Key Pressed
-					return;
+					return buffer.toString();
 				}
 				else
 					// Character Key Pressed
 					buffer.append(keyboards[keyboard][sy].substring(sx, sx + 1));
 				break;
 			case Button.ID_ESCAPE:
-				this.invalid = true;
-				return;
+				return this.invalidate();
 			}
 			lcd.refresh();
 
 		} while (true);
+	}
+
+	@Override
+	public boolean ready()
+	{
+		return true; //We are always ready.
 	}
 
 }

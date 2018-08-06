@@ -1,7 +1,7 @@
 package addonloader.menu;
 
+import addonloader.util.DataCarrier;
 import addonloader.util.ui.Icon;
-import lejos.MainMenu;
 
 public class SubmenuEntry extends MappedMenu implements MenuEntry {
 	
@@ -9,6 +9,8 @@ public class SubmenuEntry extends MappedMenu implements MenuEntry {
 	
 	private final Icon icon;
 	private final boolean single_shot;
+	private DataCarrier<String> title_carrier;
+	protected MappedMenu parent;
 	
 	public SubmenuEntry(String name, Icon icon, boolean single_shot)
 	{
@@ -22,13 +24,18 @@ public class SubmenuEntry extends MappedMenu implements MenuEntry {
 		this(name, icon, false);
 	}
 	
+	public void set_title_service(DataCarrier<String> title)
+	{
+		this.title_carrier = title;
+	}
+	
 	@Override
 	public void run()
 	{
 		int selection = 0;
 		do
 		{
-			MainMenu.self.newScreen(this.title);
+			if(this.title_carrier != null) title_carrier.load_carrier(this.title);
 			selection = this.open();
 			if(selection < 0) break;
 			this.get(selection).run();
@@ -46,6 +53,12 @@ public class SubmenuEntry extends MappedMenu implements MenuEntry {
 	public String getName()
 	{
 		return this.title;
+	}
+	
+	@Override
+	public void setParent(MappedMenu menu)
+	{
+		this.parent = menu;
 	}
 
 }

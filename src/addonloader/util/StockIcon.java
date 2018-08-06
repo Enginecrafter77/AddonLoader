@@ -1,7 +1,9 @@
 package addonloader.util;
 
+import java.io.IOException;
+
+import addonloader.main.Reference;
 import addonloader.util.ui.Icon;
-import lejos.Reference;
 import lejos.hardware.lcd.Image;
 
 /**
@@ -57,20 +59,22 @@ public enum StockIcon implements Icon {
 	
 	private static final BinaryStorage<Image> stock_image_database = new ImageStorage(Reference.MENU_DIRECTORY + "/icon-pack.db");
 	
+	/** Buffer used to cache icon currently attempted to load. */
+	private Image cache;
+	
 	/**
 	 * Loads the specified icon from storage into memory buffer.
 	 * @return Memory-Buffered {@link Image image}
 	 */
-	public Image call()
+	public Image call() throws IOException
 	{
-		try
-		{
-			return stock_image_database.read(this.ordinal());
-		}
-		catch(Exception exc)
-		{
-			return null;
-		}
+		this.cache();
+		return cache;
+	}
+	
+	public void cache() throws IOException
+	{
+		if(cache == null) cache = stock_image_database.read(this.ordinal());
 	}
 	
 	@Override

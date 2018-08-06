@@ -1,11 +1,12 @@
 package addonloader.menu;
 
-import java.util.Iterator;
-
-import addonloader.util.ExtraCarrier;
+import java.io.IOException;
+import addonloader.util.DataCarrier;
+import addonloader.util.StockIcon;
 import addonloader.util.ui.Icon;
 import addonloader.util.ui.MenuCircular;
 import lejos.hardware.lcd.Image;
+import lejos.hardware.lcd.LCD;
 
 /**
  * MappedMenu is simply menu, where you can dynamically add new entries.
@@ -17,7 +18,7 @@ import lejos.hardware.lcd.Image;
  * entries during runtime.
  * @author Enginecrafter77
  */
-public class MappedMenu extends MenuCircular<MenuEntry> implements ExtraCarrier<String>{
+public class MappedMenu extends MenuCircular<MenuEntry> implements DataCarrier<String>{
 	
 	private static final long serialVersionUID = 8618770778403876527L;
 	
@@ -46,7 +47,6 @@ public class MappedMenu extends MenuCircular<MenuEntry> implements ExtraCarrier<
 	public final String title;
 	/** The extra data you can pass to menu entry. */
 	private String extra;
-	private Image[] icon_cache;
 	
 	/**
 	 * Default, recommended MappedMenu constructor used
@@ -57,7 +57,6 @@ public class MappedMenu extends MenuCircular<MenuEntry> implements ExtraCarrier<
 	{
 		super();
 		this.title = title;
-		this.icon_cache = new Image[0];
 	}
 	
 	/**
@@ -70,42 +69,50 @@ public class MappedMenu extends MenuCircular<MenuEntry> implements ExtraCarrier<
 	public MappedMenu(String title, String[] items, Icon[] icons)
 	{
 		this(title);
-		for(int index = 0; index < items.length; index++) this.add(new NoOpEntry(items[index], icons[index]));
-		this.reload_cache();
-	}
-	
-	/**
-	 * Reloads the cached icons buffer.
-	 */
-	public void reload_cache()
-	{
-		icon_cache = new Image[this.size()]; //Load the icon buffer with specific icons.
-		Iterator<MenuEntry> entry = this.iterator();
-		for(int index = 0; entry.hasNext(); index++) 
+		MenuEntry entry;
+		for(int index = 0; index < items.length; index++)
 		{
-			Icon icn = entry.next().getIcon();
+			entry = new NoOpEntry(items[index], icons[index]);
 			try
 			{
-				icon_cache[index] = icn.call();
+				if(entry.getIcon() instanceof StockIcon) ((StockIcon)entry.getIcon()).cache();
 			}
-			catch(Exception exc)
+			catch(IOException exc)
 			{
-				System.err.println("[ERROR] Couldn't load icon " + icn.toString());
+				exc.printStackTrace();
+				continue;
 			}
+			this.add(entry);
 		}
 	}
 	
 	@Override
 	public int open()
 	{
-		if(this.icon_cache.length != this.size()) this.reload_cache();
+		LCD.clear();
 		return super.open();
+	}
+	
+	@Override
+	public boolean add(MenuEntry entry)
+	{
+		entry.setParent(this);
+		return super.add(entry);
 	}
 	
 	@Override
 	protected Image load_icon(int index)
 	{
-		return icon_cache[index];
+		Icon icn = this.get(index).getIcon();
+		try
+		{
+			return icn.call();
+		}
+		catch(IOException exc)
+		{
+			System.err.println("[ERROR] Failed retrieving icon " + icn.toString());
+			return null;
+		}
 	}
 
 	@Override
@@ -115,13 +122,13 @@ public class MappedMenu extends MenuCircular<MenuEntry> implements ExtraCarrier<
 	}
 	
 	@Override
-	public void loadCarrier(String extra)
+	public void load_carrier(String extra)
 	{
 		this.extra = extra;
 	}
 	
 	@Override
-	public String fetchCarrier()
+	public String fetch_carrier()
 	{
 		return this.extra;
 	}

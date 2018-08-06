@@ -1,4 +1,4 @@
-package lejos;
+package addonloader.main;
 
 /**
  * Reference class where some general configuration is stored.

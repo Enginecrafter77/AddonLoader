@@ -6,6 +6,7 @@ public abstract class SimpleMenuEntry implements MenuEntry {
 	
 	private final String title;
 	private final Icon icon;
+	protected MappedMenu parent;
 	
 	public SimpleMenuEntry(String name, Icon icon)
 	{
@@ -23,6 +24,12 @@ public abstract class SimpleMenuEntry implements MenuEntry {
 	public String getName()
 	{
 		return this.title;
+	}
+	
+	@Override
+	public void setParent(MappedMenu menu)
+	{
+		this.parent = menu;
 	}
 	
 }

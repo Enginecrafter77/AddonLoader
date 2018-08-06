@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import java.util.Iterator;
 
 import addonloader.menu.ActionHook.HookType;
-import addonloader.util.ExtraCarrier;
+import addonloader.util.DataCarrier;
 
 /**
  * HookRegistry provides simple hook-like manager
@@ -17,7 +17,7 @@ import addonloader.util.ExtraCarrier;
  * @author Enginecrafter77
  * @see ActionHook
  */
-public enum HookRegistry implements ExtraCarrier<String>{
+public enum HookRegistry implements DataCarrier<String>{
 	
 	/** Run when updating IP address list. */
 	UPDATE_IPS,
@@ -50,13 +50,13 @@ public enum HookRegistry implements ExtraCarrier<String>{
 	}
 	
 	@Override
-	public void loadCarrier(String s)
+	public void load_carrier(String s)
 	{
 		this.arg = s;
 	}
 	
 	@Override
-	public String fetchCarrier()
+	public String fetch_carrier()
 	{
 		return this.arg;
 	}
